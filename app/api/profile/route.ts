@@ -83,10 +83,14 @@ export async function PATCH(request: NextRequest) {
     if (name !== undefined) dataToUpdate.name = name;
     if (image !== undefined) dataToUpdate.image = image;
 
+    console.log('Atualizando usuário:', { userId, dataToUpdate });
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: dataToUpdate,
     });
+
+    console.log('Usuário atualizado com sucesso:', updatedUser);
 
     return NextResponse.json({
       id: updatedUser.id,
@@ -97,6 +101,6 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error('Update profile error:', error);
-    return NextResponse.json({ message: 'Erro ao atualizar perfil' }, { status: 500 });
+    return NextResponse.json({ message: 'Erro ao atualizar perfil', error: String(error) }, { status: 500 });
   }
 }
