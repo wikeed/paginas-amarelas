@@ -21,23 +21,19 @@ export const bookSchema = z
   .object({
     title: z.string().min(1, 'Título é obrigatório'),
     author: z.string().min(1, 'Autor é obrigatório'),
-    genre: z.string().optional(),
+    genre: z.string().optional().nullable().transform(v => v === '' ? undefined : v),
     pages: z
-      .number()
-      .int()
-      .positive('Páginas deve ser um número positivo')
+      .union([z.number().int().positive('Páginas deve ser um número positivo'), z.undefined(), z.null()])
       .optional()
-      .or(z.literal(0)),
+      .transform(v => v === null || v === '' || v === 0 ? undefined : v),
     currentPage: z
-      .number()
-      .int()
-      .nonnegative('Página atual deve ser um número válido')
+      .union([z.number().int().nonnegative('Página atual deve ser um número válido'), z.undefined(), z.null()])
       .optional()
-      .or(z.literal(0)),
+      .transform(v => v === null || v === '' || v === 0 ? undefined : v),
     status: z.enum(['a-ler', 'lendo', 'lido']),
-    summary: z.string().optional(),
-    coverUrl: z.string().optional(),
-    coverSource: z.enum(['api', 'upload', 'manual']).optional(),
+    summary: z.string().optional().nullable().transform(v => v === '' ? undefined : v),
+    coverUrl: z.string().optional().nullable().transform(v => v === '' ? undefined : v),
+    coverSource: z.enum(['api', 'upload', 'manual']).optional().nullable().transform(v => v === '' ? undefined : v),
   })
   .refine(
     (data) => {

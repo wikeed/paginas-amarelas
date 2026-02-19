@@ -103,6 +103,12 @@ export default function DashboardPage() {
         body: JSON.stringify(data),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error response:', errorData);
+        throw new Error(`HTTP ${response.status}: ${JSON.stringify(errorData)}`);
+      }
+
       if (response.ok) {
         mutate();
         setIsCreateOpen(false);
