@@ -83,6 +83,15 @@ export function DashboardHeader({
                     {session?.user?.email || session?.user?.name}
                   </div>
                   <button
+                    onClick={() => {
+                      router.push('/profile');
+                      setIsProfileOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-secondary hover:bg-secondary/10 transition text-sm"
+                  >
+                    👤 Meu Perfil
+                  </button>
+                  <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10 transition text-sm"
                   >
