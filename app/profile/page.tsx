@@ -97,8 +97,10 @@ export default function ProfilePage() {
   };
 
   const handleUploadImage = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      setError('Por favor, selecione uma imagem');
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError('Formato não aceito. Use PNG, JPG, WEBP ou GIF.');
       return;
     }
 
@@ -211,7 +213,7 @@ export default function ProfilePage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp,image/gif"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -264,13 +266,13 @@ export default function ProfilePage() {
                     </h2>
                     <p className="text-sm text-text-muted">@{profile.username}</p>
                   </div>
-                  <span className="text-secondary/60 group-hover:text-secondary transition">✏️</span>
+                  <span className="text-secondary/60 group-hover:text-secondary transition">
+                    ✏️
+                  </span>
                 </button>
               )}
 
-              {profile.email && (
-                <p className="text-sm text-text-muted">📧 {profile.email}</p>
-              )}
+              {profile.email && <p className="text-sm text-text-muted">📧 {profile.email}</p>}
             </div>
           </div>
 
@@ -282,30 +284,22 @@ export default function ProfilePage() {
             <h3 className="text-lg font-semibold text-white mb-4">Minha Biblioteca</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="bg-primary/50 border border-border-color rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-yellow-400">
-                  {profile.stats.aLer}
-                </div>
+                <div className="text-2xl font-bold text-yellow-400">{profile.stats.aLer}</div>
                 <div className="text-xs text-text-muted mt-1">A ler</div>
               </div>
 
               <div className="bg-primary/50 border border-border-color rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-cyan-400">
-                  {profile.stats.lendo}
-                </div>
+                <div className="text-2xl font-bold text-cyan-400">{profile.stats.lendo}</div>
                 <div className="text-xs text-text-muted mt-1">Lendo</div>
               </div>
 
               <div className="bg-primary/50 border border-border-color rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-green-400">
-                  {profile.stats.lido}
-                </div>
+                <div className="text-2xl font-bold text-green-400">{profile.stats.lido}</div>
                 <div className="text-xs text-text-muted mt-1">Lido</div>
               </div>
 
               <div className="bg-primary/50 border border-border-color rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-secondary">
-                  {profile.stats.total}
-                </div>
+                <div className="text-2xl font-bold text-secondary">{profile.stats.total}</div>
                 <div className="text-xs text-text-muted mt-1">Total</div>
               </div>
             </div>

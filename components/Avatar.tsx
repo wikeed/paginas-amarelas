@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import Image from 'next/image';
+
 interface AvatarProps {
   name?: string | null;
   image?: string | null;
@@ -8,6 +11,8 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, image, size = 'md', className = '' }: AvatarProps) {
+  const [imageError, setImageError] = useState(false);
+
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',
     md: 'w-12 h-12 text-sm',
@@ -23,12 +28,17 @@ export function Avatar({ name, image, size = 'md', className = '' }: AvatarProps
         .substring(0, 2)
     : '?';
 
-  if (image) {
+  if (image && !imageError) {
     return (
       <div
-        className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-secondary/30 flex-shrink-0 ${className}`}
+        className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-secondary/30 flex-shrink-0 relative ${className}`}
       >
-        <img src={image} alt="Avatar" className="w-full h-full object-cover" />
+        <img
+          src={`${image}?t=${Date.now()}`}
+          alt="Avatar"
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
       </div>
     );
   }

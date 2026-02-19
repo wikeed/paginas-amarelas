@@ -61,11 +61,7 @@ export function BookCover({ title, coverUrl, className = 'h-64' }: BookCoverProp
         </div>
 
         {/* Ícone de livro simplificado */}
-        <svg
-          className="w-12 h-12 text-secondary/40"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
+        <svg className="w-12 h-12 text-secondary/40" fill="currentColor" viewBox="0 0 24 24">
           <path d="M4 4.5A2.5 2.5 0 016.5 2h7A2.5 2.5 0 0116 4.5v15a2.5 2.5 0 01-2.5 2.5h-7A2.5 2.5 0 014 19.5v-15z" />
           <path d="M14 6.5v11" stroke="currentColor" strokeWidth="1.5" fill="none" />
         </svg>

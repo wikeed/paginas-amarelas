@@ -51,7 +51,7 @@ const sampleBooks = {
       summary: 'Uma coletânea de histórias inspiradas em revoluções.',
     },
   ],
-  'lendo': [
+  lendo: [
     {
       title: '1984',
       author: 'George Orwell',
@@ -88,7 +88,7 @@ const sampleBooks = {
       summary: 'A vida inusitada de um defunto-autor que narra sua própria história.',
     },
   ],
-  'lido': [
+  lido: [
     {
       title: 'O Pequeno Príncipe',
       author: 'Antoine de Saint-Exupéry',
@@ -193,7 +193,8 @@ async function main() {
                 ...bookData,
                 status,
                 // Para livros sendo lidos, definir currentPage como número aleatório menor que pages
-                currentPage: status === 'lendo' ? randomInt(1, Math.floor(bookData.pages * 0.8)) : null,
+                currentPage:
+                  status === 'lendo' ? randomInt(1, Math.floor(bookData.pages * 0.8)) : null,
                 userId: user.id,
               },
             });
