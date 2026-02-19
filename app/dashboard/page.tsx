@@ -31,14 +31,27 @@ export default function DashboardPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
 
-  // Fetch books
-  const url = activeFilter ? `/api/books?status=${activeFilter}` : '/api/books';
-
+  // Fetch books - sempre buscar todos
   const {
-    data: books = [],
+    data: allBooks = [],
     mutate,
     isLoading,
-  } = useSWR(status === 'authenticated' ? url : null, fetcher, { revalidateOnFocus: false });
+  } = useSWR(status === 'authenticated' ? '/api/books' : null, fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  // Filtrar livros conforme activeFilter
+  const books = activeFilter
+    ? allBooks.filter((book: Book) => book.status === activeFilter)
+    : allBooks;
+
+  // Calcular contagens por status
+  const bookCounts = {
+    total: allBooks.length,
+    aLer: allBooks.filter((book: Book) => book.status === 'a-ler').length,
+    lendo: allBooks.filter((book: Book) => book.status === 'lendo').length,
+    lido: allBooks.filter((book: Book) => book.status === 'lido').length,
+  };
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -142,7 +155,7 @@ export default function DashboardPage() {
         onFilterChange={setActiveFilter}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        bookCount={books.length}
+        bookCounts={bookCounts}
         onAddBook={() => setIsCreateOpen(true)}
       />
 

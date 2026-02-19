@@ -3,40 +3,76 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import { Avatar } from '@/components/Avatar';
 
 interface DashboardHeaderProps {
   activeFilter: string | null;
   onFilterChange: (filter: string | null) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  bookCount: number;
+  bookCounts: {
+    total: number;
+    aLer: number;
+    lendo: number;
+    lido: number;
+  };
   onAddBook?: () => void;
 }
-
-const filters = [
-  { value: 'a-ler', label: 'A ler' },
-  { value: 'lendo', label: 'Lendo' },
-  { value: 'lido', label: 'Lido' },
-];
 
 export function DashboardHeader({
   activeFilter,
   onFilterChange,
   searchQuery,
   onSearchChange,
-  bookCount,
+  bookCounts,
   onAddBook,
 }: DashboardHeaderProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const { data: session } = useSession();
   const router = useRouter();
+  const username = (session?.user as { username?: string } | undefined)?.username;
+  const fullName = session?.user?.name;
+
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        if (!response.ok) return;
+        const data = await response.json();
+        setProfileImage(data.image ?? null);
+      } catch (error) {
+        console.error('Erro ao buscar imagem de perfil:', error);
+      }
+    };
+
+    fetchProfileImage();
+  }, []);
 
   // Sincroniza search local com pai quando searchQuery muda
   useEffect(() => {
     setLocalSearch(searchQuery);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isProfileOpen &&
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileOpen]);
 
   // Debounce: aguarda 400ms de inatividade antes de chamar onSearchChange
   const handleSearchChange = (value: string) => {
@@ -70,17 +106,22 @@ export function DashboardHeader({
             >
               + Novo Livro
             </button>
-            <div className="relative">
+            <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 px-3 py-2 rounded border border-border-color text-text-muted hover:text-white transition"
               >
-                👤 {session?.user?.name || 'Usuário'}
+                <Avatar
+                  name={fullName || username || 'Usuário'}
+                  image={profileImage || session?.user?.image || null}
+                  size="sm"
+                />
+                {username || 'Usuário'}
               </button>
               {isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-primary border border-border-color rounded shadow-lg z-50">
                   <div className="p-3 border-b border-border-color text-sm text-text-muted">
-                    {session?.user?.email || session?.user?.name}
+                    {fullName || username || 'Usuário'}
                   </div>
                   <button
                     onClick={() => {
@@ -114,21 +155,38 @@ export function DashboardHeader({
                   : 'border border-border-color text-text-muted hover:text-white'
               }`}
             >
-              Todos ({bookCount})
+              Todos{activeFilter === null && ` (${bookCounts.total})`}
             </button>
-            {filters.map((filter) => (
-              <button
-                key={filter.value}
-                onClick={() => onFilterChange(filter.value)}
-                className={`px-4 py-2 rounded text-sm font-medium transition ${
-                  activeFilter === filter.value
-                    ? 'bg-gradient-to-r from-cyan-400 to-green-400 text-white'
-                    : 'border border-border-color text-text-muted hover:text-white'
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+            <button
+              onClick={() => onFilterChange('a-ler')}
+              className={`px-4 py-2 rounded text-sm font-medium transition ${
+                activeFilter === 'a-ler'
+                  ? 'bg-gradient-to-r from-cyan-400 to-green-400 text-white'
+                  : 'border border-border-color text-text-muted hover:text-white'
+              }`}
+            >
+              A ler{activeFilter === 'a-ler' && ` (${bookCounts.aLer})`}
+            </button>
+            <button
+              onClick={() => onFilterChange('lendo')}
+              className={`px-4 py-2 rounded text-sm font-medium transition ${
+                activeFilter === 'lendo'
+                  ? 'bg-gradient-to-r from-cyan-400 to-green-400 text-white'
+                  : 'border border-border-color text-text-muted hover:text-white'
+              }`}
+            >
+              Lendo{activeFilter === 'lendo' && ` (${bookCounts.lendo})`}
+            </button>
+            <button
+              onClick={() => onFilterChange('lido')}
+              className={`px-4 py-2 rounded text-sm font-medium transition ${
+                activeFilter === 'lido'
+                  ? 'bg-gradient-to-r from-cyan-400 to-green-400 text-white'
+                  : 'border border-border-color text-text-muted hover:text-white'
+              }`}
+            >
+              Lido{activeFilter === 'lido' && ` (${bookCounts.lido})`}
+            </button>
           </div>
 
           {/* Search */}

@@ -19,7 +19,8 @@ export function BookCover({ title, coverUrl, className = 'h-64' }: BookCoverProp
           alt={title}
           fill
           className="object-cover"
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 240px"
+          quality={85}
           priority={false}
         />
       </div>

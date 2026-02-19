@@ -84,21 +84,29 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
       const data = await res.json();
       setSuggestionsError('');
 
-      // data.docs is the Open Library docs array (normalized by proxy)
-      const items = (data.docs || []).map((doc: any) => {
-        const coverId = doc.cover_i;
+      const items = (data.items || []).map((item: any) => {
+        const volumeInfo = item.volumeInfo || {};
+        const imageLinks = volumeInfo.imageLinks || {};
+        const coverUrl =
+          imageLinks.large ||
+          imageLinks.medium ||
+          imageLinks.small ||
+          imageLinks.thumbnail ||
+          imageLinks.smallThumbnail ||
+          '';
+
         return {
-          id: doc.key || `${doc.title}-${coverId || ''}`,
-          title: doc.title || '',
-          authors: doc.author_name || [],
-          pageCount: doc.number_of_pages_median || 0,
-          description: doc.first_sentence
-            ? Array.isArray(doc.first_sentence)
-              ? doc.first_sentence[0]
-              : doc.first_sentence
-            : '',
-          thumbnail: coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : '',
-          publishedDate: doc.first_publish_year ? String(doc.first_publish_year) : '',
+          id: item.id || `${volumeInfo.title}-${coverUrl || ''}`,
+          title: volumeInfo.title || '',
+          authors: volumeInfo.authors || [],
+          pageCount: volumeInfo.pageCount || 0,
+          description:
+            typeof volumeInfo.description === 'string'
+              ? volumeInfo.description
+              : volumeInfo.description?.text || '',
+          thumbnail: coverUrl,
+          publishedDate: volumeInfo.publishedDate || '',
+          language: volumeInfo.language || '',
         } as any;
       });
 
@@ -214,7 +222,8 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                         alt={s.title}
                         fill
                         sizes="40px"
-                        style={{ objectFit: 'cover' }}
+                        className="object-cover"
+                        quality={85}
                       />
                     </div>
                   ) : (
@@ -222,7 +231,10 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                   )}
                   <div className="flex-1 text-left">
                     <div className="text-sm font-semibold">{s.title}</div>
-                    <div className="text-xs text-text-muted">{s.authors.join(', ')}</div>
+                    <div className="text-xs text-text-muted">
+                      {s.authors.join(', ')}
+                      {s.language ? ` • ${String(s.language).toUpperCase()}` : ''}
+                    </div>
                   </div>
                 </li>
               ))}

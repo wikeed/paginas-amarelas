@@ -4,6 +4,7 @@ const nextConfig = {
     domains: [
       'picsum.photos',
       'books.google.com',
+      'books.googleusercontent.com',
       'covers.openlibrary.org',
       'localhost',
       'images.theconversation.com',

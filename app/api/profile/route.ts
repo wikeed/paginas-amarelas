@@ -90,6 +90,12 @@ export async function PATCH(request: NextRequest) {
       data: dataToUpdate,
     });
 
+    const stats = await Promise.all([
+      prisma.book.count({ where: { userId, status: 'a-ler' } }),
+      prisma.book.count({ where: { userId, status: 'lendo' } }),
+      prisma.book.count({ where: { userId, status: 'lido' } }),
+    ]);
+
     console.log('Usuário atualizado com sucesso:', updatedUser);
 
     return NextResponse.json({
@@ -98,9 +104,18 @@ export async function PATCH(request: NextRequest) {
       username: updatedUser.username,
       email: updatedUser.email,
       image: (updatedUser as any).image,
+      stats: {
+        aLer: stats[0],
+        lendo: stats[1],
+        lido: stats[2],
+        total: stats[0] + stats[1] + stats[2],
+      },
     });
   } catch (error) {
     console.error('Update profile error:', error);
-    return NextResponse.json({ message: 'Erro ao atualizar perfil', error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Erro ao atualizar perfil', error: String(error) },
+      { status: 500 }
+    );
   }
 }
