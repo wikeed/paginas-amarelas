@@ -1,0 +1,68 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { bookSchema } from '@/lib/validations';
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+    }
+
+    const userId = parseInt((session.user as any).id);
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status');
+
+    const query: any = { userId };
+    if (status) {
+      query.status = status;
+    }
+
+    const books = await prisma.book.findMany({
+      where: query,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return NextResponse.json(books);
+  } catch (error) {
+    console.error('Get books error:', error);
+    return NextResponse.json({ message: 'Erro ao buscar livros' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+    }
+
+    const body = await request.json();
+
+    // Validate input
+    const result = bookSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { message: 'Dados inválidos', errors: result.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const userId = parseInt((session.user as any).id);
+    const book = await prisma.book.create({
+      data: {
+        ...result.data,
+        userId,
+      },
+    });
+
+    return NextResponse.json(book, { status: 201 });
+  } catch (error) {
+    console.error('Create book error:', error);
+    return NextResponse.json({ message: 'Erro ao criar livro' }, { status: 500 });
+  }
+}
