@@ -17,27 +17,41 @@ export const registerSchema = z
     path: ['confirmPassword'],
   });
 
-export const bookSchema = z.object({
-  title: z.string().min(1, 'Título é obrigatório'),
-  author: z.string().min(1, 'Autor é obrigatório'),
-  genre: z.string().optional(),
-  pages: z
-    .number()
-    .int()
-    .positive('Páginas deve ser um número positivo')
-    .optional()
-    .or(z.literal(0)),
-  currentPage: z
-    .number()
-    .int()
-    .nonnegative('Página atual deve ser um número válido')
-    .optional()
-    .or(z.literal(0)),
-  status: z.enum(['a-ler', 'lendo', 'lido']),
-  summary: z.string().optional(),
-  coverUrl: z.string().optional(),
-  coverSource: z.enum(['api', 'upload', 'manual']).optional(),
-});
+export const bookSchema = z
+  .object({
+    title: z.string().min(1, 'Título é obrigatório'),
+    author: z.string().min(1, 'Autor é obrigatório'),
+    genre: z.string().optional(),
+    pages: z
+      .number()
+      .int()
+      .positive('Páginas deve ser um número positivo')
+      .optional()
+      .or(z.literal(0)),
+    currentPage: z
+      .number()
+      .int()
+      .nonnegative('Página atual deve ser um número válido')
+      .optional()
+      .or(z.literal(0)),
+    status: z.enum(['a-ler', 'lendo', 'lido']),
+    summary: z.string().optional(),
+    coverUrl: z.string().optional(),
+    coverSource: z.enum(['api', 'upload', 'manual']).optional(),
+  })
+  .refine(
+    (data) => {
+      // Se tiver páginas e página atual, currentPage não pode ser > pages
+      if (data.pages && data.currentPage && data.currentPage > data.pages) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Página atual não pode ser maior que o total de páginas',
+      path: ['currentPage'],
+    }
+  );
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 
@@ -28,8 +28,28 @@ export function DashboardHeader({
   onAddBook,
 }: DashboardHeaderProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { data: session } = useSession();
   const router = useRouter();
+
+  // Sincroniza search local com pai quando searchQuery muda
+  useEffect(() => {
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  // Debounce: aguarda 400ms de inatividade antes de chamar onSearchChange
+  const handleSearchChange = (value: string) => {
+    setLocalSearch(value);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      onSearchChange(value);
+    }, 400);
+  };
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
@@ -107,8 +127,8 @@ export function DashboardHeader({
             <input
               type="text"
               placeholder="Buscar livro..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={localSearch}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full px-4 py-2 bg-primary border border-border-color rounded text-white placeholder-text-muted focus:outline-none focus:border-secondary text-sm"
             />
             <span className="absolute right-3 top-2.5 text-text-muted">🔍</span>

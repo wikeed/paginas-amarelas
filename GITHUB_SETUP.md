@@ -3,6 +3,7 @@
 ## ✅ Preparação Concluída
 
 O repositório git foi **inicializado localmente** com um commit inicial incluindo:
+
 - ✅ Todos os arquivos do projeto
 - ✅ Configurações do App Router (Next.js 14)
 - ✅ Sistema de autenticação (NextAuth.js)
@@ -128,6 +129,7 @@ paginas-amarelas/
 ## 🔑 Variáveis de Ambiente
 
 O arquivo `.env.example` contém template com:
+
 - `DATABASE_URL` - String de conexão PostgreSQL
 - `NEXTAUTH_URL` - URL da aplicação
 - `NEXTAUTH_SECRET` - Chave secreta JWT
@@ -148,29 +150,34 @@ O arquivo `.env.example` contém template com:
 ## ✨ Features Principais
 
 ### 🔐 Autenticação
+
 - Registro e login com NextAuth.js
 - Senhas hasheadas com bcryptjs
 - Proteção de rotas via middleware
 
 ### 📚 Gerenciamento de Livros
+
 - **CRUD Completo**: Criar, ler, atualizar, deletar
 - **Busca em Tempo Real**: Por título ou autor
 - **Filtros por Status**: A ler, Lendo, Lido
 - **Rastreamento de Leitura**: Página atual quando "Lendo"
 
 ### 🖼️ Sistema de Capas
+
 - Placeholder elegante para livros sem capa
 - Upload de arquivo local (`/public/uploads`)
 - URL manual (colar link direto)
 - Retirada automática da API (Open Library)
 
 ### 💾 Banco de Dados
+
 - PostgreSQL com Prisma ORM
 - 3 migrations principais gerenciadas
 - Relacionamentos User ↔ Book via CASCADE
 - Campos opcionais (gênero, páginas)
 
 ### 🎨 Interface
+
 - Design responsivo (mobile-first)
 - Tailwind CSS com cores customizadas
 - Temas escuros elegantes
@@ -180,15 +187,15 @@ O arquivo `.env.example` contém template com:
 
 ## 🛠️ Tecnologias
 
-| Stack | Ferramenta |
-|-------|-----------|
-| **Frontend** | Next.js 14, React 18, TypeScript |
-| **Backend** | API Routes, Node.js |
-| **Database** | PostgreSQL, Prisma ORM |
-| **Auth** | NextAuth.js, bcryptjs |
-| **Validation** | Zod schemas |
-| **Styling** | Tailwind CSS, PostCSS |
-| **Package Manager** | npm |
+| Stack               | Ferramenta                       |
+| ------------------- | -------------------------------- |
+| **Frontend**        | Next.js 14, React 18, TypeScript |
+| **Backend**         | API Routes, Node.js              |
+| **Database**        | PostgreSQL, Prisma ORM           |
+| **Auth**            | NextAuth.js, bcryptjs            |
+| **Validation**      | Zod schemas                      |
+| **Styling**         | Tailwind CSS, PostCSS            |
+| **Package Manager** | npm                              |
 
 ---
 
@@ -252,4 +259,3 @@ git remote -v     # Ver remotes configurados
 git status        # Ver status atual
 git log --oneline # Ver commits recentes
 ```
-

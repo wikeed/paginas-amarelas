@@ -9,11 +9,6 @@ interface BookCoverProps {
 }
 
 export function BookCover({ title, coverUrl, className = 'h-64' }: BookCoverProps) {
-  // Função para abreviar título para o placeholder
-  const getAbbreviatedTitle = (title: string) => {
-    return title.substring(0, 40);
-  };
-
   if (coverUrl) {
     return (
       <div
@@ -31,41 +26,54 @@ export function BookCover({ title, coverUrl, className = 'h-64' }: BookCoverProp
     );
   }
 
-  // Placeholder elegante com gradient
+  // Obter primeira letra do título
+  const firstLetter = title.charAt(0).toUpperCase();
+
+  // Placeholder elegante com gradient + letra
   return (
     <div
-      className={`${className} relative bg-gradient-to-br from-primary via-primary/80 to-secondary/20 overflow-hidden flex flex-col items-center justify-center p-4`}
+      className={`${className} relative bg-gradient-to-br from-secondary/40 via-primary to-accent/20 overflow-hidden flex flex-col items-center justify-center p-4`}
     >
-      {/* Decoração de fundo */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-secondary rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent rounded-full blur-3xl" />
+      {/* Background pattern - linhas suaves simulando livro */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-0 left-1/2 w-1 h-full bg-white transform -translate-x-1/2" />
+        <svg className="w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <pattern id="books" patternUnits="userSpaceOnUse" width="40" height="40">
+              <line x1="0" y1="0" x2="40" y2="40" stroke="white" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#books)" />
+        </svg>
       </div>
 
-      {/* Conteúdo do placeholder */}
-      <div className="relative z-10 text-center flex flex-col items-center justify-center h-full gap-3">
-        {/* Ícone de livro */}
+      {/* Decoração de fundo - círculos suaves */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-secondary rounded-full blur-2xl" />
+        <div className="absolute bottom-1/4 left-1/4 w-24 h-24 bg-accent rounded-full blur-2xl" />
+      </div>
+
+      {/* Conteúdo - Letra inicial grande */}
+      <div className="relative z-10 flex flex-col items-center justify-center h-full gap-4">
+        {/* Círculo com primeira letra */}
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-secondary to-secondary/60 flex items-center justify-center shadow-lg border-2 border-secondary/30">
+          <span className="text-4xl font-bold text-white/80">{firstLetter}</span>
+        </div>
+
+        {/* Ícone de livro simplificado */}
         <svg
-          className="w-16 h-16 text-secondary/60 mb-2"
-          fill="none"
-          stroke="currentColor"
+          className="w-12 h-12 text-secondary/40"
+          fill="currentColor"
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M12 6.253v13m0-13C6.5 6.253 2 10.998 2 17.25m20-11.002c0 .244 0 .505 0 .778m0 0c0 6.252-4.5 10.997-9.999 10.997C5.5 28.028 1 23.283 1 17.03m20 0V9.222c0-.245 0-.505 0-.778M18 9.5a9 9 0 10-18 0"
-          />
+          <path d="M4 4.5A2.5 2.5 0 016.5 2h7A2.5 2.5 0 0116 4.5v15a2.5 2.5 0 01-2.5 2.5h-7A2.5 2.5 0 014 19.5v-15z" />
+          <path d="M14 6.5v11" stroke="currentColor" strokeWidth="1.5" fill="none" />
         </svg>
 
-        {/* Título truncado */}
-        <p className="text-sm font-semibold text-text-muted text-center leading-tight max-w-[90%]">
-          {getAbbreviatedTitle(title)}
+        {/* Título truncado e legível */}
+        <p className="text-xs font-medium text-secondary/70 text-center leading-tight max-w-[85%] line-clamp-2">
+          {title}
         </p>
-
-        {/* Texto de fallback */}
-        <p className="text-xs text-text-muted/60">Sem imagem</p>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
+import { searchBooks } from '@/lib/text';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { BookCard } from '@/components/BookCard';
 import { BookDetailsModal } from '@/components/BookDetailsModal';
@@ -57,13 +58,8 @@ export default function DashboardPage() {
     );
   }
 
-  // Filter and search books
-  const filteredBooks = books.filter((book: Book) => {
-    const matchesSearch =
-      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  // Filter and search books with prefix priority
+  const filteredBooks = searchBooks(books, searchQuery);
 
   const handleExpand = (id: number) => {
     const book = books.find((b: Book) => b.id === id);
@@ -168,6 +164,7 @@ export default function DashboardPage() {
                 author={book.author}
                 genre={book.genre}
                 pages={book.pages}
+                currentPage={(book as any).currentPage}
                 status={book.status}
                 coverUrl={(book as any).coverUrl}
                 onExpand={handleExpand}
