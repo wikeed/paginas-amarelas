@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     // Validate input
     const result = bookSchema.safeParse(body);
     if (!result.success) {
+      console.error('Validation error:', result.error);
       return NextResponse.json(
         { message: 'Dados inválidos', errors: result.error.flatten() },
         { status: 400 }
@@ -53,6 +54,8 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = parseInt((session.user as any).id);
+    console.log('Creating book for user:', userId, 'Data:', result.data);
+
     const book = await prisma.book.create({
       data: {
         ...result.data,
@@ -60,9 +63,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log('Book created successfully:', book.id);
     return NextResponse.json(book, { status: 201 });
   } catch (error) {
     console.error('Create book error:', error);
-    return NextResponse.json({ message: 'Erro ao criar livro' }, { status: 500 });
+    return NextResponse.json(
+      { 
+        message: 'Erro ao criar livro', 
+        error: String(error),
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, 
+      { status: 500 }
+    );
   }
 }
