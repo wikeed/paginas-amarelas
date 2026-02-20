@@ -5,18 +5,21 @@
 ### 1️⃣ Supabase (Database)
 
 #### a) Criar projeto Supabase
+
 1. Ir para [supabase.com](https://supabase.com)
 2. Sign in / Create account
 3. "New Project" → Escolher organização/região
 4. Aguardar inicialização
 
 #### b) Obter Connection String
+
 1. Home do projeto → "Connect"
 2. Selecionar "Prisma"
 3. Copiar a string (formato: `postgresql://postgres:[password]@[project].supabase.co:5432/postgres`)
 4. Guardar valor de `[password]` que foi gerado
 
 ### 2️⃣ Atualizar `.env.production` localmente
+
 ```bash
 # Abrir .env.production e substituir:
 DATABASE_URL="postgresql://postgres:[PASSWORD]@[PROJECT].supabase.co:5432/postgres?schema=public"
@@ -25,12 +28,14 @@ NEXTAUTH_SECRET="94877d422a226b8e123438a43ebe9e9dc292c653f92fb89e451bf4db9c1d7e6
 ```
 
 ### 3️⃣ Rodar Migrations no Supabase
+
 ```bash
 # Use DATABASE_URL do Supabase para aplicar schema
 DATABASE_URL="postgresql://..." npx prisma db push
 ```
 
 ### 4️⃣ Vercel - Adicionar Environment Variables
+
 1. Ir para [vercel.com](https://vercel.com)
 2. Projeto "paginas-amarelas" → Settings → Environment Variables
 3. Adicionar 3 variáveis:
@@ -41,11 +46,13 @@ DATABASE_URL="postgresql://..." npx prisma db push
 > ⚠️ Se o projeto já está conectado ao GitHub, Vercel pode detectar mudanças automaticamente
 
 ### 5️⃣ Redeploy na Vercel
+
 1. Vercel Dashboard → Seu projeto
 2. "Deployments" → Redeployar (ou esperar push automático)
 3. Aguardar build e deploy
 
 ### 6️⃣ Verificar Deploy
+
 ```bash
 curl https://seu-projeto-vercel.vercel.app/api/books
 # Deve retornar erro 401 (não autenticado) - sinal de que API funciona
@@ -85,6 +92,7 @@ curl https://seu-projeto-vercel.vercel.app/api/books
 ## Próximo passo
 
 Uma vez que tudo estiver funcionando em produção, considere:
+
 - [ ] Adicionar logging/monitoring (Sentry, LogRocket)
 - [ ] Setup de backup automático Supabase
 - [ ] Custom domain Vercel
