@@ -106,7 +106,7 @@ export function EditBookModal({ isOpen, onClose, book, onSave }: EditBookModalPr
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
               Gênero
@@ -190,18 +190,18 @@ export function EditBookModal({ isOpen, onClose, book, onSave }: EditBookModalPr
         {/* Hidden field para coverSource */}
         <input type="hidden" {...form.register('coverSource')} />
 
-        <div className="flex gap-2">
+        <div className="flex flex-col-reverse sm:flex-row gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 px-3 rounded border border-border-color text-text-muted hover:text-white transition text-sm"
+            className="w-full sm:flex-1 py-2 px-3 rounded border border-border-color text-text-muted hover:text-white transition text-sm"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            className="flex-1 py-2 px-3 rounded bg-gradient-to-r from-cyan-400 to-green-400 text-white font-medium text-sm hover:brightness-110 transition disabled:opacity-50"
+            className="w-full sm:flex-1 py-2 px-3 rounded bg-gradient-to-r from-cyan-400 to-green-400 text-white font-medium text-sm hover:brightness-110 transition disabled:opacity-50"
           >
             {isLoading ? 'Salvando...' : 'Salvar'}
           </button>

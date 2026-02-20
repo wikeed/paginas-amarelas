@@ -183,7 +183,7 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-primary/80 border-b border-border-color">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
             Meu Perfil
           </h1>
         </div>
@@ -204,7 +204,7 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             {/* Avatar with Upload */}
             <div className="relative group">
-              <Avatar name={profile.name || profile.username} image={profile.image} size="xl" />
+              <Avatar name={profile.username} image={profile.image} size="xl" />
 
               {/* Upload Button Overlay */}
               <button
@@ -243,11 +243,11 @@ export default function ProfilePage() {
                     className="w-full px-3 py-2 bg-primary border border-border-color rounded text-white focus:outline-none focus:border-secondary"
                     placeholder="Seu nome"
                   />
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={handleSaveName}
                       disabled={isUpdating}
-                      className="px-4 py-1 bg-secondary/20 text-secondary hover:bg-secondary/30 rounded text-sm font-medium transition disabled:opacity-50"
+                      className="w-full sm:w-auto px-4 py-1 bg-secondary/20 text-secondary hover:bg-secondary/30 rounded text-sm font-medium transition disabled:opacity-50"
                     >
                       Salvar
                     </button>
@@ -256,7 +256,7 @@ export default function ProfilePage() {
                         setIsEditingName(false);
                         setEditingName(profile.name || '');
                       }}
-                      className="px-4 py-1 bg-border-color text-text-muted hover:text-white rounded text-sm font-medium transition"
+                      className="w-full sm:w-auto px-4 py-1 bg-border-color text-text-muted hover:text-white rounded text-sm font-medium transition"
                     >
                       Cancelar
                     </button>

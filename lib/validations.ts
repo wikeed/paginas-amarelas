@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  username: z.string().min(1, 'Usuário é obrigatório'),
+  username: z.string().trim().toLowerCase().min(1, 'Usuário é obrigatório'),
   password: z.string().min(1, 'Senha é obrigatória'),
 });
 
 export const registerSchema = z
   .object({
     name: z.string().min(1, 'Nome é obrigatório'),
-    username: z.string().min(3, 'Usuário deve ter pelo menos 3 caracteres'),
+    username: z.string().trim().toLowerCase().min(3, 'Usuário deve ter pelo menos 3 caracteres'),
     password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
     confirmPassword: z.string(),
   })
@@ -21,19 +21,43 @@ export const bookSchema = z
   .object({
     title: z.string().min(1, 'Título é obrigatório'),
     author: z.string().min(1, 'Autor é obrigatório'),
-    genre: z.string().optional().nullable().transform(v => v === '' ? undefined : v),
+    genre: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((v) => (v === '' ? undefined : v)),
     pages: z
-      .union([z.number().int().positive('Páginas deve ser um número positivo'), z.undefined(), z.null()])
+      .union([
+        z.number().int().positive('Páginas deve ser um número positivo'),
+        z.undefined(),
+        z.null(),
+      ])
       .optional()
-      .transform(v => v === null || v === '' || v === 0 ? undefined : v),
+      .transform((v) => (v === null || v === 0 ? undefined : v)),
     currentPage: z
-      .union([z.number().int().nonnegative('Página atual deve ser um número válido'), z.undefined(), z.null()])
+      .union([
+        z.number().int().nonnegative('Página atual deve ser um número válido'),
+        z.undefined(),
+        z.null(),
+      ])
       .optional()
-      .transform(v => v === null || v === '' || v === 0 ? undefined : v),
+      .transform((v) => (v === null || v === 0 ? undefined : v)),
     status: z.enum(['a-ler', 'lendo', 'lido']),
-    summary: z.string().optional().nullable().transform(v => v === '' ? undefined : v),
-    coverUrl: z.string().optional().nullable().transform(v => v === '' ? undefined : v),
-    coverSource: z.enum(['api', 'upload', 'manual']).optional().nullable().transform(v => v === '' ? undefined : v),
+    summary: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((v) => (v === '' ? undefined : v)),
+    coverUrl: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((v) => (v === '' ? undefined : v)),
+    coverSource: z
+      .enum(['api', 'upload', 'manual'])
+      .optional()
+      .nullable()
+      .transform((v) => v ?? undefined),
   })
   .refine(
     (data) => {

@@ -95,28 +95,28 @@ export function DashboardHeader({
   return (
     <header className="sticky top-0 z-40 bg-primary/95 backdrop-blur border-b border-border-color">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
             Páginas Amarelas
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2">
             <button
               onClick={onAddBook}
-              className="px-4 py-2 rounded bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium text-sm hover:brightness-110 transition"
+              className="px-4 py-2 rounded bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium text-sm hover:brightness-110 transition whitespace-nowrap"
             >
               + Novo Livro
             </button>
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded border border-border-color text-text-muted hover:text-white transition"
+                className="flex items-center gap-2 px-3 py-2 rounded border border-border-color text-text-muted hover:text-white transition max-w-[170px] sm:max-w-none"
               >
                 <Avatar
-                  name={fullName || username || 'Usuário'}
+                  name={username || 'Usuário'}
                   image={profileImage || session?.user?.image || null}
                   size="sm"
                 />
-                {username || 'Usuário'}
+                <span className="hidden sm:inline truncate">{username || 'Usuário'}</span>
               </button>
               {isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-primary border border-border-color rounded shadow-lg z-50">

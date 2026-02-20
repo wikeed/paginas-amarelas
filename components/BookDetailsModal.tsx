@@ -42,7 +42,7 @@ export function BookDetailsModal({ isOpen, onClose, book }: BookDetailsModalProp
           <p className="text-white">{book.author}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {book.genre && (
             <div>
               <h3 className="text-xs font-semibold text-text-muted uppercase mb-1">Gênero</h3>

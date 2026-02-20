@@ -54,16 +54,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const userId = parseInt((session.user as any).id);
     const bookId = parseInt(params.id);
 
-    // Verify ownership
-    const book = await prisma.book.findFirst({
-      where: {
-        id: bookId,
-        userId,
-      },
+    // Check if book exists
+    const bookExists = await prisma.book.findUnique({
+      where: { id: bookId },
+      select: { userId: true },
     });
 
-    if (!book) {
+    if (!bookExists) {
       return NextResponse.json({ message: 'Livro não encontrado' }, { status: 404 });
+    }
+
+    // Verify ownership
+    if (bookExists.userId !== userId) {
+      return NextResponse.json(
+        { message: 'Você não tem permissão para editar este livro' },
+        { status: 403 }
+      );
     }
 
     const updatedBook = await prisma.book.update({
@@ -91,16 +97,22 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const userId = parseInt((session.user as any).id);
     const bookId = parseInt(params.id);
 
-    // Verify ownership
-    const book = await prisma.book.findFirst({
-      where: {
-        id: bookId,
-        userId,
-      },
+    // Check if book exists
+    const bookExists = await prisma.book.findUnique({
+      where: { id: bookId },
+      select: { userId: true },
     });
 
-    if (!book) {
+    if (!bookExists) {
       return NextResponse.json({ message: 'Livro não encontrado' }, { status: 404 });
+    }
+
+    // Verify ownership
+    if (bookExists.userId !== userId) {
+      return NextResponse.json(
+        { message: 'Você não tem permissão para deletar este livro' },
+        { status: 403 }
+      );
     }
 
     await prisma.book.delete({

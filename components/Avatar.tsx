@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 interface AvatarProps {
@@ -12,6 +12,12 @@ interface AvatarProps {
 
 export function Avatar({ name, image, size = 'md', className = '' }: AvatarProps) {
   const [imageError, setImageError] = useState(false);
+  const [cacheBuster, setCacheBuster] = useState(() => Date.now());
+
+  useEffect(() => {
+    setCacheBuster(Date.now());
+    setImageError(false);
+  }, [image]);
 
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',
@@ -33,10 +39,13 @@ export function Avatar({ name, image, size = 'md', className = '' }: AvatarProps
       <div
         className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-secondary/30 flex-shrink-0 relative ${className}`}
       >
-        <img
-          src={`${image}?t=${Date.now()}`}
+        <Image
+          src={`${image}?t=${cacheBuster}`}
           alt="Avatar"
-          className="w-full h-full object-cover"
+          fill
+          sizes="(max-width: 768px) 48px, 96px"
+          unoptimized
+          className="object-cover"
           onError={() => setImageError(true)}
         />
       </div>

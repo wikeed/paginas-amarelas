@@ -81,7 +81,7 @@ export function AuthForm() {
       }
 
       setIsLogin(true);
-      loginForm.setValue('username', data.username);
+      loginForm.setValue('username', result?.user?.username ?? data.username);
       loginForm.setValue('password', data.password);
       setError('Registrado com sucesso! Faça login com suas credenciais.');
     } catch (err) {
@@ -94,13 +94,14 @@ export function AuthForm() {
   return (
     <div className="w-full max-w-[560px] flex flex-col">
       {/* Título - Header */}
-      <div className="flex justify-center mb-12 py-4 flex-shrink-0">
+      <div className="flex justify-center mb-8 sm:mb-12 py-4 flex-shrink-0">
         <h1
           className="
-    text-4xl sm:text-5xl md:text-6xl
+    text-3xl sm:text-5xl md:text-6xl
     font-bold
     leading-relaxed
     pb-2
+    text-center break-words
     bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500
     bg-clip-text text-transparent
     drop-shadow-[0_2px_8px_rgba(251,191,36,0.4)]

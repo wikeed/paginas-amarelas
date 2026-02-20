@@ -18,7 +18,10 @@ interface Book extends BookInput {
   updatedAt?: string;
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const res = await fetch(url);
+  return res.json();
+};
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -36,7 +39,7 @@ export default function DashboardPage() {
     data: allBooks = [],
     mutate,
     isLoading,
-  } = useSWR(status === 'authenticated' ? '/api/books' : null, fetcher, {
+  } = useSWR<Book[]>(status === 'authenticated' ? '/api/books' : null, fetcher, {
     revalidateOnFocus: false,
   });
 
@@ -175,7 +178,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-max">
-            {filteredBooks.map((book: Book) => (
+            {filteredBooks.map((book) => (
               <BookCard
                 key={book.id}
                 id={book.id}
@@ -183,9 +186,9 @@ export default function DashboardPage() {
                 author={book.author}
                 genre={book.genre}
                 pages={book.pages}
-                currentPage={(book as any).currentPage}
+                currentPage={book.currentPage}
                 status={book.status}
-                coverUrl={(book as any).coverUrl}
+                coverUrl={book.coverUrl}
                 onExpand={handleExpand}
                 onEdit={handleEdit}
                 onDelete={handleDelete}

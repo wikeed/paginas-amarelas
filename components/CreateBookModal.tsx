@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
@@ -47,82 +47,85 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
   const coverUrl = form.watch('coverUrl');
 
   // shared fetch function to allow manual trigger (uses Open Library via proxy)
-  async function fetchSuggestionsNow(query?: string) {
-    const t = (query ?? titleValue)?.trim();
-    console.log('[CreateBookModal] fetchSuggestionsNow called, title=', titleValue);
-    if (!t || t.length < 3) {
-      console.log('[CreateBookModal] query too short, clearing suggestions');
-      setSuggestions([]);
-      return;
-    }
-    if (suppressSuggestions) return;
-
-    try {
-      console.log('[CreateBookModal] fetching suggestions (Open Library) for', t);
-      setSuggestionsLoading(true);
-      // abort any in-flight request
-      if (suggestionsAbortRef.current) suggestionsAbortRef.current.abort();
-      const controller = new AbortController();
-      suggestionsAbortRef.current = controller;
-
-      const res = await fetch(`/api/google-books?q=${encodeURIComponent(t)}&maxResults=5`, {
-        signal: controller.signal,
-      });
-
-      if (res.status === 429) {
+  const fetchSuggestionsNow = useCallback(
+    async (query?: string) => {
+      const t = (query ?? titleValue)?.trim();
+      console.log('[CreateBookModal] fetchSuggestionsNow called, title=', titleValue);
+      if (!t || t.length < 3) {
+        console.log('[CreateBookModal] query too short, clearing suggestions');
         setSuggestions([]);
-        setSuggestionsError('Limite da API atingido. Tente novamente mais tarde.');
-        setSuppressSuggestions(true);
-        window.setTimeout(() => {
-          setSuppressSuggestions(false);
-          setSuggestionsError('');
-        }, 10000);
+        return;
+      }
+      if (suppressSuggestions) return;
+
+      try {
+        console.log('[CreateBookModal] fetching suggestions (Open Library) for', t);
+        setSuggestionsLoading(true);
+        // abort any in-flight request
+        if (suggestionsAbortRef.current) suggestionsAbortRef.current.abort();
+        const controller = new AbortController();
+        suggestionsAbortRef.current = controller;
+
+        const res = await fetch(`/api/google-books?q=${encodeURIComponent(t)}&maxResults=5`, {
+          signal: controller.signal,
+        });
+
+        if (res.status === 429) {
+          setSuggestions([]);
+          setSuggestionsError('Limite da API atingido. Tente novamente mais tarde.');
+          setSuppressSuggestions(true);
+          window.setTimeout(() => {
+            setSuppressSuggestions(false);
+            setSuggestionsError('');
+          }, 10000);
+          setSuggestionsLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setSuggestionsError('');
+
+        const items = (data.items || []).map((item: any) => {
+          const volumeInfo = item.volumeInfo || {};
+          const imageLinks = volumeInfo.imageLinks || {};
+          const coverUrl =
+            imageLinks.large ||
+            imageLinks.medium ||
+            imageLinks.small ||
+            imageLinks.thumbnail ||
+            imageLinks.smallThumbnail ||
+            '';
+
+          return {
+            id: item.id || `${volumeInfo.title}-${coverUrl || ''}`,
+            title: volumeInfo.title || '',
+            authors: volumeInfo.authors || [],
+            pageCount: volumeInfo.pageCount || 0,
+            description:
+              typeof volumeInfo.description === 'string'
+                ? volumeInfo.description
+                : volumeInfo.description?.text || '',
+            thumbnail: coverUrl,
+            publishedDate: volumeInfo.publishedDate || '',
+            language: volumeInfo.language || '',
+          } as any;
+        });
+
+        setSuggestions(items);
         setSuggestionsLoading(false);
-        return;
+        suggestionsAbortRef.current = null;
+      } catch (err) {
+        if ((err as any)?.name === 'AbortError') {
+          console.log('[CreateBookModal] fetch aborted');
+          return;
+        }
+        console.error('[CreateBookModal] fetch error', err);
+        setSuggestions([]);
+        setSuggestionsLoading(false);
       }
-
-      const data = await res.json();
-      setSuggestionsError('');
-
-      const items = (data.items || []).map((item: any) => {
-        const volumeInfo = item.volumeInfo || {};
-        const imageLinks = volumeInfo.imageLinks || {};
-        const coverUrl =
-          imageLinks.large ||
-          imageLinks.medium ||
-          imageLinks.small ||
-          imageLinks.thumbnail ||
-          imageLinks.smallThumbnail ||
-          '';
-
-        return {
-          id: item.id || `${volumeInfo.title}-${coverUrl || ''}`,
-          title: volumeInfo.title || '',
-          authors: volumeInfo.authors || [],
-          pageCount: volumeInfo.pageCount || 0,
-          description:
-            typeof volumeInfo.description === 'string'
-              ? volumeInfo.description
-              : volumeInfo.description?.text || '',
-          thumbnail: coverUrl,
-          publishedDate: volumeInfo.publishedDate || '',
-          language: volumeInfo.language || '',
-        } as any;
-      });
-
-      setSuggestions(items);
-      setSuggestionsLoading(false);
-      suggestionsAbortRef.current = null;
-    } catch (err) {
-      if ((err as any)?.name === 'AbortError') {
-        console.log('[CreateBookModal] fetch aborted');
-        return;
-      }
-      console.error('[CreateBookModal] fetch error', err);
-      setSuggestions([]);
-      setSuggestionsLoading(false);
-    }
-  }
+    },
+    [suppressSuggestions, titleValue]
+  );
 
   useEffect(() => {
     if (suppressSuggestions) return;
@@ -136,7 +139,7 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [titleValue]);
+  }, [fetchSuggestionsNow, suppressSuggestions, titleValue]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -275,7 +278,7 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
               Gênero
@@ -362,18 +365,18 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
         {/* Hidden fields para coverSource */}
         <input type="hidden" {...form.register('coverSource')} />
 
-        <div className="flex gap-2">
+        <div className="flex flex-col-reverse sm:flex-row gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 px-3 rounded border border-border-color text-text-muted hover:text-white transition text-sm"
+            className="w-full sm:flex-1 py-2 px-3 rounded border border-border-color text-text-muted hover:text-white transition text-sm"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            className="flex-1 py-2 px-3 rounded bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium text-sm hover:brightness-110 transition disabled:opacity-50"
+            className="w-full sm:flex-1 py-2 px-3 rounded bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium text-sm hover:brightness-110 transition disabled:opacity-50"
           >
             {isLoading ? 'Criando...' : 'Criar Livro'}
           </button>
