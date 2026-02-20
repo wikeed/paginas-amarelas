@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { PublicProfileHeader } from '@/components/profile/PublicProfileHeader';
@@ -86,6 +87,31 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   return (
     <div className="min-h-screen bg-primary">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <Link
+            href="/feed"
+            className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent hover:opacity-90 transition"
+          >
+            📖 Páginas Amarelas
+          </Link>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Link
+              href="/feed"
+              className="px-4 py-2 rounded border border-border-color text-text-muted hover:text-secondary hover:border-secondary transition text-sm font-medium text-center"
+            >
+              Feed de Atividade
+            </Link>
+            <Link
+              href="/dashboard"
+              className="px-4 py-2 rounded border border-border-color text-text-muted hover:text-secondary hover:border-secondary transition text-sm font-medium text-center"
+            >
+              Minha Biblioteca
+            </Link>
+          </div>
+        </div>
+      </div>
+
       <PublicProfileHeader username={user.username} name={user.name} image={user.image} />
 
       <PublicProfileStats

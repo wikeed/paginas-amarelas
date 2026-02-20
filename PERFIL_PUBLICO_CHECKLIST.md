@@ -23,8 +23,9 @@
    - Design consistente com o dashboard
 
 4. **components/profile/PublicProfileStats.tsx**
-   - Widget de estatísticas: Total, Quero Ler, Lendo, Lidos
-   - Cores por status (amarelo, ciano, verde)
+
+- Widget de estatísticas: Total, A ler, Lendo, Lidos
+- Cores por status (amarelo, ciano, verde)
 
 #### Rotas
 
@@ -62,7 +63,7 @@
 
 - [ ] **Filtros por Status**:
   - Clicar em "Todos" (default)
-  - Clicar em "Quero Ler" - deve filtrar apenas a-ler
+  - Clicar em "A ler" - deve filtrar apenas a-ler
   - Clicar em "Lendo" - deve filtrar apenas lendo
   - Clicar em "Lidos" - deve filtrar apenas lido
   - Contadores devem atualizar dinamicamente

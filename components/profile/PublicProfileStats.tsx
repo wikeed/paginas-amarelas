@@ -16,7 +16,7 @@ export function PublicProfileStats({ total, aLer, lendo, lido }: PublicProfileSt
 
         <div className="bg-primary/50 border border-border-color rounded-lg p-4 text-center">
           <div className="text-2xl font-bold text-yellow-400">{aLer}</div>
-          <div className="text-xs text-text-muted mt-1">Quero Ler</div>
+          <div className="text-xs text-text-muted mt-1">A ler</div>
         </div>
 
         <div className="bg-primary/50 border border-border-color rounded-lg p-4 text-center">

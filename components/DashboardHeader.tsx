@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 import { Avatar } from '@/components/Avatar';
 
@@ -96,16 +97,13 @@ export function DashboardHeader({
     <header className="sticky top-0 z-40 bg-primary/95 backdrop-blur border-b border-border-color">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-            Páginas Amarelas
-          </h1>
+          <Link
+            href="/feed"
+            className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent hover:opacity-90 transition"
+          >
+            📖 Páginas Amarelas
+          </Link>
           <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2">
-            <button
-              onClick={onAddBook}
-              className="px-4 py-2 rounded bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium text-sm hover:brightness-110 transition whitespace-nowrap"
-            >
-              + Novo Livro
-            </button>
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -189,16 +187,30 @@ export function DashboardHeader({
             </button>
           </div>
 
-          {/* Search */}
-          <div className="relative w-full md:w-64">
-            <input
-              type="text"
-              placeholder="Buscar livro..."
-              value={localSearch}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full px-4 py-2 bg-primary border border-border-color rounded text-white placeholder-text-muted focus:outline-none focus:border-secondary text-sm"
-            />
-            <span className="absolute right-3 top-2.5 text-text-muted">🔍</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            <Link
+              href="/feed"
+              className="px-4 py-2 rounded border border-border-color text-text-muted hover:text-secondary hover:border-secondary transition text-sm font-medium text-center whitespace-nowrap"
+            >
+              Feed de Atividade
+            </Link>
+            <button
+              onClick={onAddBook}
+              className="px-4 py-2 rounded bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium text-sm hover:brightness-110 transition whitespace-nowrap"
+            >
+              + Novo Livro
+            </button>
+            {/* Search */}
+            <div className="relative w-full md:w-64">
+              <input
+                type="text"
+                placeholder="Buscar livro..."
+                value={localSearch}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full px-4 py-2 bg-primary border border-border-color rounded text-white placeholder-text-muted focus:outline-none focus:border-secondary text-sm"
+              />
+              <span className="absolute right-3 top-2.5 text-text-muted">🔍</span>
+            </div>
           </div>
         </div>
       </div>

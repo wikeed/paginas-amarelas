@@ -38,10 +38,7 @@ export function Navigation() {
 
           {/* Mobile Menu Toggle */}
           <div className="sm:hidden">
-            <Link
-              href="/feed"
-              className="text-text-muted hover:text-secondary transition text-sm"
-            >
+            <Link href="/feed" className="text-text-muted hover:text-secondary transition text-sm">
               Feed
             </Link>
           </div>

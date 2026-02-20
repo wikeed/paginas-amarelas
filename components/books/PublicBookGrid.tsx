@@ -97,7 +97,7 @@ export function PublicBookGrid({ initialBooks, username }: PublicBookGridProps) 
                     : 'border border-border-color text-text-muted hover:text-white'
                 }`}
               >
-                Quero Ler{activeFilter === 'a-ler' && ` (${bookCounts.aLer})`}
+                A ler{activeFilter === 'a-ler' && ` (${bookCounts.aLer})`}
               </button>
               <button
                 onClick={() => setActiveFilter('lendo')}
