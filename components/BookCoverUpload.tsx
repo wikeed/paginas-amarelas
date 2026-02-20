@@ -49,14 +49,17 @@ export function BookCoverUpload({
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao fazer upload');
+        const errorPayload = await response.json().catch(() => null);
+        const errorMessage = errorPayload?.message || 'Erro ao fazer upload';
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       onCoverChange(data.url, 'upload');
       setShowManualUrl(false);
     } catch (err) {
-      setError('Erro ao fazer upload da imagem. Tente novamente.');
+      const message = err instanceof Error ? err.message : 'Erro ao fazer upload da imagem.';
+      setError(message);
       console.error(err);
     } finally {
       setIsUploading(false);

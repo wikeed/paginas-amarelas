@@ -11,16 +11,21 @@ import {
   type RegisterInput,
 } from '@/lib/validations';
 import { signIn } from 'next-auth/react';
+import { FeedbackAlert } from './FeedbackAlert';
+import { LoadingSpinner } from './ui/LoadingSpinner';
+
+type FeedbackType = 'success' | 'error' | 'info';
 
 export function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
-  const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState<{ type: FeedbackType; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const handleTabChange = (isLoginTab: boolean) => {
     setIsLogin(isLoginTab);
+    setFeedback(null);
     scrollAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -36,7 +41,7 @@ export function AuthForm() {
 
   const onLoginSubmit = async (data: LoginInput) => {
     setIsLoading(true);
-    setError('');
+    setFeedback(null);
     try {
       const result = await signIn('credentials', {
         username: data.username,
@@ -45,12 +50,18 @@ export function AuthForm() {
       });
 
       if (result?.error) {
-        setError('Usuário ou senha incorretos');
-      } else {
-        router.push('/dashboard');
+        setFeedback({ type: 'error', message: 'Usuário ou senha incorretos' });
+        return;
       }
+
+      if (result?.ok || result?.url) {
+        window.location.href = result?.url ?? '/dashboard';
+        return;
+      }
+
+      setFeedback({ type: 'error', message: 'Erro ao fazer login' });
     } catch (err) {
-      setError('Erro ao fazer login');
+      setFeedback({ type: 'error', message: 'Erro ao fazer login' });
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +69,7 @@ export function AuthForm() {
 
   const onRegisterSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
-    setError('');
+    setFeedback(null);
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -76,16 +87,19 @@ export function AuthForm() {
       if (!response.ok) {
         // Exibir mensagem de erro específica se disponível
         const errorMessage = result.error || result.message || 'Erro ao registrar';
-        setError(errorMessage);
+        setFeedback({ type: 'error', message: errorMessage });
         return;
       }
 
       setIsLogin(true);
       loginForm.setValue('username', result?.user?.username ?? data.username);
       loginForm.setValue('password', data.password);
-      setError('Registrado com sucesso! Faça login com suas credenciais.');
+      setFeedback({
+        type: 'success',
+        message: 'Registrado com sucesso! Faça login com suas credenciais.',
+      });
     } catch (err) {
-      setError('Erro ao registrar usuário');
+      setFeedback({ type: 'error', message: 'Erro ao registrar usuário' });
     } finally {
       setIsLoading(false);
     }
@@ -137,11 +151,7 @@ export function AuthForm() {
 
       {/* Área de Conteúdo */}
       <div ref={scrollAreaRef} className="flex-1">
-        {error && (
-          <div className="mb-4 p-3 rounded bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
-            {error}
-          </div>
-        )}
+        {feedback && <FeedbackAlert type={feedback.type} message={feedback.message} />}
 
         {isLogin ? (
           <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
@@ -186,7 +196,14 @@ export function AuthForm() {
               disabled={isLoading}
               className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 text-white font-bold rounded-lg shadow-lg shadow-orange-500/50 hover:shadow-orange-500/70 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {isLoading ? 'Carregando...' : 'Entrar'}
+              {isLoading ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <LoadingSpinner size={18} />
+                  Entrando...
+                </span>
+              ) : (
+                'Entrar'
+              )}
             </button>
           </form>
         ) : (

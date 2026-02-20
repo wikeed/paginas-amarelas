@@ -154,6 +154,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-primary">
       <DashboardHeader
+        activeSection="dashboard"
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
         searchQuery={searchQuery}

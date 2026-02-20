@@ -4,6 +4,7 @@ import { join } from 'path';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { randomBytes } from 'crypto';
+import { getSupabaseClient } from '@/lib/supabase';
 
 // Tipos MIME aceitados para imagens
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -44,10 +45,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Arquivo muito grande (máx 5MB)' }, { status: 400 });
     }
 
-    // Gerar nome único para o arquivo
+    // Gerar nome unico para o arquivo
     const randomName = randomBytes(8).toString('hex');
     const extension = EXTENSION_MAP[file.type] || 'jpg';
     const filename = `${randomName}.${extension}`;
+
+    const supabase = getSupabaseClient();
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
+
+    if (supabase) {
+      const bytes = await file.arrayBuffer();
+      const { error } = await supabase.storage
+        .from(bucketName)
+        .upload(filename, Buffer.from(bytes), {
+          contentType: file.type,
+          upsert: false,
+        });
+
+      if (error) {
+        return NextResponse.json(
+          { message: `Erro ao fazer upload: ${error.message}` },
+          { status: 500 }
+        );
+      }
+
+      const { data } = supabase.storage.from(bucketName).getPublicUrl(filename);
+      return NextResponse.json({ url: data.publicUrl, filename }, { status: 200 });
+    }
 
     // Criar diretório se não existir
     const uploadDir = join(process.cwd(), 'public', 'uploads');
@@ -61,11 +85,10 @@ export async function POST(request: NextRequest) {
     // Retornar URL pública
     const publicUrl = `/uploads/${filename}`;
 
-    console.log(`✅ Upload realizado: ${publicUrl}`);
-
     return NextResponse.json({ url: publicUrl, filename }, { status: 200 });
   } catch (error) {
     console.error('Upload error:', error);
-    return NextResponse.json({ message: 'Erro ao fazer upload' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Erro ao fazer upload';
+    return NextResponse.json({ message }, { status: 500 });
   }
 }
