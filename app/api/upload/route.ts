@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseClient();
     const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
 
+    // Tentar Supabase primeiro
     if (supabase) {
       try {
         const bytes = await file.arrayBuffer();
@@ -69,39 +70,46 @@ export async function POST(request: NextRequest) {
           });
 
         if (error) {
-          console.error('Supabase upload error:', error);
-          return NextResponse.json(
-            { message: `Erro ao fazer upload no Supabase: ${error.message}` },
-            { status: 500 }
-          );
+          console.error('Supabase upload error:', error.message);
+          console.log('Fazendo fallback para storage local...');
+          // Não retorna erro, faz fallback para local abaixo
+        } else {
+          const { data } = supabase.storage.from(bucketName).getPublicUrl(filename);
+          console.log('✅ Upload Supabase bem-sucedido:', data.publicUrl);
+          return NextResponse.json({ url: data.publicUrl, filename, storage: 'supabase' }, { status: 200 });
         }
-
-        const { data } = supabase.storage.from(bucketName).getPublicUrl(filename);
-        console.log('Upload Supabase bem-sucedido:', data.publicUrl);
-        return NextResponse.json({ url: data.publicUrl, filename }, { status: 200 });
       } catch (supabaseError) {
         console.error('Supabase exception:', supabaseError);
-        return NextResponse.json(
-          { message: `Exceção no Supabase: ${supabaseError instanceof Error ? supabaseError.message : 'Erro desconhecido'}` },
-          { status: 500 }
-        );
+        console.log('Fazendo fallback para storage local...');
+        // Não retorna erro, faz fallback para local abaixo
       }
+    } else {
+      console.log('Supabase não disponível, usando storage local');
     }
 
-    // Criar diretório se não existir
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadDir, { recursive: true });
+    // Fallback: Upload local (sempre executa se Supabase falhar ou não estiver configurado)
+    try {
+      // Criar diretório se não existir
+      const uploadDir = join(process.cwd(), 'public', 'uploads');
+      await mkdir(uploadDir, { recursive: true });
 
-    // Salvar arquivo
-    const filePath = join(uploadDir, filename);
-    const bytes = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(bytes));
+      // Salvar arquivo
+      const filePath = join(uploadDir, filename);
+      const bytes = await file.arrayBuffer();
+      await writeFile(filePath, Buffer.from(bytes));
 
-    // Retornar URL pública
-    const publicUrl = `/uploads/${filename}`;
-    console.log('Upload local bem-sucedido:', publicUrl);
+      // Retornar URL pública
+      const publicUrl = `/uploads/${filename}`;
+      console.log('✅ Upload local bem-sucedido:', publicUrl);
 
-    return NextResponse.json({ url: publicUrl, filename }, { status: 200 });
+      return NextResponse.json({ url: publicUrl, filename, storage: 'local' }, { status: 200 });
+    } catch (localError) {
+      console.error('Erro no upload local:', localError);
+      return NextResponse.json(
+        { message: `Erro ao salvar arquivo: ${localError instanceof Error ? localError.message : 'Erro desconhecido'}` },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error('Upload error:', error);
     const message = error instanceof Error ? error.message : 'Erro desconhecido ao fazer upload';
