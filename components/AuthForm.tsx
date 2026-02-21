@@ -43,10 +43,12 @@ export function AuthForm() {
     setIsLoading(true);
     setFeedback(null);
     try {
+      const callbackUrl = '/dashboard';
       const result = await signIn('credentials', {
         username: data.username,
         password: data.password,
         redirect: false,
+        callbackUrl,
       });
 
       if (result?.error) {
@@ -54,12 +56,13 @@ export function AuthForm() {
         return;
       }
 
-      if (result?.ok || result?.url) {
-        window.location.href = result?.url ?? '/dashboard';
+      if (result?.ok) {
+        router.push(result?.url ?? callbackUrl);
+        router.refresh();
         return;
       }
 
-      setFeedback({ type: 'error', message: 'Erro ao fazer login' });
+      setFeedback({ type: 'error', message: 'Não foi possível confirmar o login' });
     } catch (err) {
       setFeedback({ type: 'error', message: 'Erro ao fazer login' });
     } finally {
