@@ -19,6 +19,8 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { data: session } = useSession();
+  
+  // Estados para busca por título
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const debounceRef = useRef<number | null>(null);
   const suggestionsAbortRef = useRef<AbortController | null>(null);
@@ -27,6 +29,16 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
   const [didSelectSuggestion, setDidSelectSuggestion] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState('');
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  
+  // Estados para busca por autor
+  const [authorSuggestions, setAuthorSuggestions] = useState<any[]>([]);
+  const authorDebounceRef = useRef<number | null>(null);
+  const authorAbortRef = useRef<AbortController | null>(null);
+  const authorContainerRef = useRef<HTMLDivElement | null>(null);
+  const [suppressAuthorSuggestions, setSuppressAuthorSuggestions] = useState(false);
+  const [didSelectAuthorSuggestion, setDidSelectAuthorSuggestion] = useState(false);
+  const [authorSuggestionsError, setAuthorSuggestionsError] = useState('');
+  const [authorSuggestionsLoading, setAuthorSuggestionsLoading] = useState(false);
 
   const form = useForm<BookInput>({
     resolver: zodResolver(bookSchema),
@@ -44,6 +56,7 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
   });
 
   const titleValue = form.watch('title');
+  const authorValue = form.watch('author');
   const statusValue = form.watch('status');
   const coverUrl = form.watch('coverUrl');
 
@@ -129,6 +142,90 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
     [didSelectSuggestion, suppressSuggestions, titleValue]
   );
 
+  // Função de busca por autor
+  const fetchAuthorSuggestionsNow = useCallback(
+    async (query?: string) => {
+      const authorQuery = (query ?? authorValue)?.trim();
+      console.log('[CreateBookModal] fetchAuthorSuggestionsNow called, author=', authorValue);
+      if (!authorQuery || authorQuery.length < 3) {
+        console.log('[CreateBookModal] author query too short, clearing suggestions');
+        setAuthorSuggestions([]);
+        return;
+      }
+      if (suppressAuthorSuggestions || didSelectAuthorSuggestion) return;
+
+      try {
+        console.log('[CreateBookModal] fetching author suggestions for', authorQuery);
+        setAuthorSuggestionsLoading(true);
+        // abort any in-flight request
+        if (authorAbortRef.current) authorAbortRef.current.abort();
+        const controller = new AbortController();
+        authorAbortRef.current = controller;
+
+        // Buscar por autor com mode=author
+        const res = await fetch(`/api/google-books?q=${encodeURIComponent(authorQuery)}&mode=author&maxResults=10`, {
+          signal: controller.signal,
+        });
+
+        if (res.status === 429) {
+          setAuthorSuggestions([]);
+          setAuthorSuggestionsError('Limite da API atingido. Tente novamente mais tarde.');
+          setSuppressAuthorSuggestions(true);
+          window.setTimeout(() => {
+            setSuppressAuthorSuggestions(false);
+            setAuthorSuggestionsError('');
+          }, 10000);
+          setAuthorSuggestionsLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        setAuthorSuggestionsError('');
+
+        const items = (data.items || []).map((item: any) => {
+          const volumeInfo = item.volumeInfo || {};
+          const imageLinks = volumeInfo.imageLinks || {};
+          const coverUrl =
+            imageLinks.large ||
+            imageLinks.medium ||
+            imageLinks.small ||
+            imageLinks.thumbnail ||
+            imageLinks.smallThumbnail ||
+            '';
+
+          return {
+            id: item.id || `${volumeInfo.title}-${coverUrl || ''}`,
+            title: volumeInfo.title || '',
+            authors: volumeInfo.authors || [],
+            pageCount: volumeInfo.pageCount || 0,
+            description:
+              typeof volumeInfo.description === 'string'
+                ? volumeInfo.description
+                : volumeInfo.description?.text || '',
+            thumbnail: coverUrl,
+            publishedDate: volumeInfo.publishedDate || '',
+            language: volumeInfo.language || '',
+          } as any;
+        });
+
+        setAuthorSuggestions(items);
+        setAuthorSuggestionsLoading(false);
+        authorAbortRef.current = null;
+      } catch (err) {
+        if ((err as any)?.name === 'AbortError') {
+          console.log('[CreateBookModal] author fetch aborted');
+          setAuthorSuggestionsLoading(false);
+          return;
+        }
+        console.error('[CreateBookModal] author fetch error', err);
+        setAuthorSuggestions([]);
+        setAuthorSuggestionsLoading(false);
+      }
+    },
+    [didSelectAuthorSuggestion, suppressAuthorSuggestions, authorValue]
+  );
+
+  // Effect para busca por título (debounced)
   useEffect(() => {
     if (suppressSuggestions) return;
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
@@ -143,6 +240,21 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
     };
   }, [fetchSuggestionsNow, suppressSuggestions, titleValue]);
 
+  // Effect para busca por autor (debounced)
+  useEffect(() => {
+    if (suppressAuthorSuggestions) return;
+    if (authorDebounceRef.current) window.clearTimeout(authorDebounceRef.current);
+
+    // debounce 500ms
+    authorDebounceRef.current = window.setTimeout(() => {
+      fetchAuthorSuggestionsNow();
+    }, 500);
+
+    return () => {
+      if (authorDebounceRef.current) window.clearTimeout(authorDebounceRef.current);
+    };
+  }, [fetchAuthorSuggestionsNow, suppressAuthorSuggestions, authorValue]);
+
   // Close suggestions when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -150,6 +262,20 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
       if (!(e.target instanceof Node)) return;
       if (!containerRef.current.contains(e.target)) {
         setSuggestions([]);
+      }
+    }
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  // Close author suggestions when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (!authorContainerRef.current) return;
+      if (!(e.target instanceof Node)) return;
+      if (!authorContainerRef.current.contains(e.target)) {
+        setAuthorSuggestions([]);
       }
     }
 
@@ -278,18 +404,100 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
           )}
         </div>
 
-        <div>
+        <div className="relative" ref={authorContainerRef}>
           <label className="block text-xs font-semibold text-text-muted uppercase mb-1">
             Autor
           </label>
           <input
             type="text"
-            placeholder="Digite o autor"
-            {...form.register('author')}
+            placeholder="Digite o nome do autor"
+            {...form.register('author', {
+              onChange: () => {
+                setDidSelectAuthorSuggestion(false);
+              },
+            })}
             className="w-full px-3 py-2 bg-primary border border-border-color rounded text-white text-sm focus:outline-none focus:border-secondary"
           />
           {form.formState.errors.author && (
             <p className="mt-1 text-xs text-red-400">{form.formState.errors.author.message}</p>
+          )}
+
+          {authorSuggestions.length > 0 && (
+            <ul className="absolute z-20 left-0 right-0 bg-primary border border-border-color mt-1 rounded max-h-60 overflow-auto">
+              {authorSuggestions.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center gap-2 px-2 py-2 hover:bg-white/5 cursor-pointer"
+                  onClick={() => {
+                    // prevent the author watch effect from immediately re-fetching
+                    setSuppressAuthorSuggestions(true);
+                    setDidSelectAuthorSuggestion(true);
+                    if (authorDebounceRef.current) {
+                      window.clearTimeout(authorDebounceRef.current);
+                    }
+                    if (authorAbortRef.current) {
+                      authorAbortRef.current.abort();
+                      authorAbortRef.current = null;
+                    }
+                    setAuthorSuggestionsLoading(false);
+                    form.setValue('title', s.title);
+                    form.setValue('author', s.authors.join(', '));
+                    form.setValue(
+                      'pages',
+                      s.pageCount && s.pageCount > 0 ? s.pageCount : undefined
+                    );
+                    form.setValue('summary', s.description || '');
+                    if (s.thumbnail) {
+                      form.setValue('coverUrl', s.thumbnail);
+                      form.setValue('coverSource', 'api');
+                    }
+                    setAuthorSuggestions([]);
+                    // re-enable after a short delay
+                    window.setTimeout(() => setSuppressAuthorSuggestions(false), 350);
+                  }}
+                >
+                  {s.thumbnail ? (
+                    <div className="w-10 h-14 relative rounded overflow-hidden">
+                      <Image
+                        src={s.thumbnail}
+                        alt={s.title}
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                        quality={85}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-14 bg-border-color rounded" />
+                  )}
+                  <div className="flex-1 text-left">
+                    <div className="text-sm font-semibold">{s.title}</div>
+                    <div className="text-xs text-text-muted">
+                      {s.authors.join(', ')}
+                      {s.language ? ` • ${String(s.language).toUpperCase()}` : ''}
+                    </div>
+                  </div>
+                </li>
+              ))}
+              {authorSuggestionsLoading && (
+                <li className="px-2 py-2 text-xs text-text-muted">Buscando livros do autor...</li>
+              )}
+              {authorSuggestionsError && (
+                <li className="px-2 py-2 text-xs text-red-400">{authorSuggestionsError}</li>
+              )}
+            </ul>
+          )}
+          {/* inline status when list is empty */}
+          {authorValue && authorValue.trim().length >= 3 && (
+            <div className="mt-1 text-xs text-text-muted">
+              {authorSuggestionsLoading && <span>Buscando livros do autor...</span>}
+              {!authorSuggestionsLoading && authorSuggestionsError && (
+                <span className="text-red-400">{authorSuggestionsError}</span>
+              )}
+              {!authorSuggestionsLoading && !authorSuggestionsError && authorSuggestions.length === 0 && (
+                <span>Nenhum livro encontrado para este autor</span>
+              )}
+            </div>
           )}
         </div>
 
