@@ -103,6 +103,58 @@ export default function ProfilePage() {
     }
   };
 
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Redimensionar se maior que 800px
+          const maxSize = 800;
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = (height / width) * maxSize;
+              width = maxSize;
+            } else {
+              width = (width / height) * maxSize;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Erro ao comprimir imagem'));
+              }
+            },
+            'image/jpeg',
+            0.85 // Qualidade 85%
+          );
+        };
+        img.onerror = () => reject(new Error('Erro ao carregar imagem'));
+      };
+      reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+    });
+  };
+
   const handleUploadImage = async (file: File) => {
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -111,18 +163,32 @@ export default function ProfilePage() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Imagem muito grande (máx 5MB)');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Imagem muito grande (máx 10MB)');
       return;
     }
 
     try {
       setIsUploadingImage(true);
       setError('');
+      
+      console.log('Tamanho original:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+
+      // Comprimir imagem se for JPEG, PNG ou WEBP
+      let fileToUpload = file;
+      if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        try {
+          fileToUpload = await compressImage(file);
+          console.log('Tamanho comprimido:', (fileToUpload.size / 1024 / 1024).toFixed(2), 'MB');
+        } catch (compressError) {
+          console.warn('Erro ao comprimir, usando original:', compressError);
+          // Continua com arquivo original se falhar
+        }
+      }
 
       // Upload do arquivo
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
 
       const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
@@ -130,10 +196,12 @@ export default function ProfilePage() {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Erro no upload');
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erro no upload (${uploadResponse.status})`);
       }
 
       const uploadData = await uploadResponse.json();
+      console.log('Upload bem-sucedido:', uploadData.url);
 
       // Atualizar perfil com URL da imagem
       const updateResponse = await fetch('/api/profile', {
@@ -143,14 +211,21 @@ export default function ProfilePage() {
       });
 
       if (!updateResponse.ok) {
-        throw new Error('Erro ao salvar imagem');
+        const errorData = await updateResponse.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Erro ao salvar imagem no perfil');
       }
 
       const profileData = await updateResponse.json();
       setProfile(profileData);
+      
+      // Forçar atualização da sessão
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
     } catch (err) {
-      console.error(err);
-      setError('Erro ao fazer upload da imagem');
+      console.error('Upload error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao fazer upload';
+      setError(errorMessage);
     } finally {
       setIsUploadingImage(false);
       if (fileInputRef.current) {

@@ -35,14 +35,17 @@ export async function POST(request: NextRequest) {
     // Validar tipo de arquivo - apenas MIME types permitidos
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { message: `Tipo de arquivo não suportado. Use PNG, JPG, WEBP ou GIF.` },
+        { message: `Tipo de arquivo não suportado: ${file.type}. Use PNG, JPG, WEBP ou GIF.` },
         { status: 400 }
       );
     }
 
-    // Validar tamanho (máx 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ message: 'Arquivo muito grande (máx 5MB)' }, { status: 400 });
+    // Validar tamanho (máx 10MB - aumentado pois vamos comprimir no frontend)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { message: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(2)}MB). Máximo: 10MB` },
+        { status: 400 }
+      );
     }
 
     // Gerar nome unico para o arquivo
@@ -50,27 +53,39 @@ export async function POST(request: NextRequest) {
     const extension = EXTENSION_MAP[file.type] || 'jpg';
     const filename = `${randomName}.${extension}`;
 
+    console.log('Upload iniciado:', { filename, size: file.size, type: file.type });
+
     const supabase = getSupabaseClient();
     const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'uploads';
 
     if (supabase) {
-      const bytes = await file.arrayBuffer();
-      const { error } = await supabase.storage
-        .from(bucketName)
-        .upload(filename, Buffer.from(bytes), {
-          contentType: file.type,
-          upsert: false,
-        });
+      try {
+        const bytes = await file.arrayBuffer();
+        const { error } = await supabase.storage
+          .from(bucketName)
+          .upload(filename, Buffer.from(bytes), {
+            contentType: file.type,
+            upsert: false,
+          });
 
-      if (error) {
+        if (error) {
+          console.error('Supabase upload error:', error);
+          return NextResponse.json(
+            { message: `Erro ao fazer upload no Supabase: ${error.message}` },
+            { status: 500 }
+          );
+        }
+
+        const { data } = supabase.storage.from(bucketName).getPublicUrl(filename);
+        console.log('Upload Supabase bem-sucedido:', data.publicUrl);
+        return NextResponse.json({ url: data.publicUrl, filename }, { status: 200 });
+      } catch (supabaseError) {
+        console.error('Supabase exception:', supabaseError);
         return NextResponse.json(
-          { message: `Erro ao fazer upload: ${error.message}` },
+          { message: `Exceção no Supabase: ${supabaseError instanceof Error ? supabaseError.message : 'Erro desconhecido'}` },
           { status: 500 }
         );
       }
-
-      const { data } = supabase.storage.from(bucketName).getPublicUrl(filename);
-      return NextResponse.json({ url: data.publicUrl, filename }, { status: 200 });
     }
 
     // Criar diretório se não existir
@@ -84,11 +99,12 @@ export async function POST(request: NextRequest) {
 
     // Retornar URL pública
     const publicUrl = `/uploads/${filename}`;
+    console.log('Upload local bem-sucedido:', publicUrl);
 
     return NextResponse.json({ url: publicUrl, filename }, { status: 200 });
   } catch (error) {
     console.error('Upload error:', error);
-    const message = error instanceof Error ? error.message : 'Erro ao fazer upload';
+    const message = error instanceof Error ? error.message : 'Erro desconhecido ao fazer upload';
     return NextResponse.json({ message }, { status: 500 });
   }
 }

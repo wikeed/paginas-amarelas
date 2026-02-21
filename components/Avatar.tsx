@@ -12,11 +12,17 @@ interface AvatarProps {
 
 export function Avatar({ name, image, size = 'md', className = '' }: AvatarProps) {
   const [imageError, setImageError] = useState(false);
-  const [cacheBuster, setCacheBuster] = useState(() => Date.now());
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    setCacheBuster(Date.now());
-    setImageError(false);
+    if (image) {
+      // Adicionar timestamp para evitar cache
+      const separator = image.includes('?') ? '&' : '?';
+      setImageUrl(`${image}${separator}t=${Date.now()}`);
+      setImageError(false);
+    } else {
+      setImageUrl(null);
+    }
   }, [image]);
 
   const sizeClasses = {
@@ -34,13 +40,13 @@ export function Avatar({ name, image, size = 'md', className = '' }: AvatarProps
         .substring(0, 2)
     : '?';
 
-  if (image && !imageError) {
+  if (imageUrl && !imageError) {
     return (
       <div
         className={`${sizeClasses[size]} rounded-full overflow-hidden border-2 border-secondary/30 flex-shrink-0 relative ${className}`}
       >
         <Image
-          src={`${image}?t=${cacheBuster}`}
+          src={imageUrl}
           alt="Avatar"
           fill
           sizes="(max-width: 768px) 48px, 96px"
