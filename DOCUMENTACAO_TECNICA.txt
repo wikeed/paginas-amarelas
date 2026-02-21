@@ -1,0 +1,841 @@
+================================================================================
+        DOCUMENTAÇÃO TÉCNICA - PÁGINAS AMARELAS
+        Gerenciador de Biblioteca Pessoal de Livros
+================================================================================
+
+📚 VISÃO GERAL DO PROJETO
+================================================================================
+
+O Páginas Amarelas é uma aplicação web full-stack que permite aos usuários
+gerenciar sua biblioteca pessoal de livros, descobrir novos livros através
+de APIs externas, e compartilhar suas leituras com outros usuários através
+de um feed social.
+
+
+================================================================================
+🛠️ TECNOLOGIAS UTILIZADAS
+================================================================================
+
+1. NEXT.JS 14 (App Router)
+   ---------------------------
+   O que é: Framework React para desenvolvimento web moderno
+
+   Como funciona:
+   - Next.js é como um "React turbinado" que facilita criar sites rápidos
+   - O "App Router" é a nova forma de organizar páginas (pasta app/)
+   - Cada pasta em app/ vira uma rota automaticamente
+     Exemplo: app/dashboard/page.tsx → site.com/dashboard
+
+   Por que usamos:
+   - Renderização no servidor (páginas carregam mais rápido)
+   - Rotas dinâmicas fáceis (como /autor/[nome-do-autor])
+   - API routes integradas (backend e frontend no mesmo projeto)
+
+
+2. TYPESCRIPT
+   ---------------------------
+   O que é: JavaScript com tipos (validação de dados)
+
+   Como funciona:
+   - É JavaScript normal, mas você declara o "tipo" das variáveis
+   - Exemplo: const nome: string = "João" (só aceita texto)
+   - Evita bugs antes mesmo de executar o código
+
+   Por que usamos:
+   - Código mais seguro e confiável
+   - Autocompletar melhor no editor
+   - Menos erros em produção
+
+
+3. REACT 18
+   ---------------------------
+   O que é: Biblioteca para criar interfaces interativas
+
+   Como funciona:
+   - Divide a interface em "componentes" (pecinhas reutilizáveis)
+   - Cada componente é uma função que retorna HTML (JSX)
+   - "Estados" (useState) permitem que a tela reaja a mudanças
+
+   Por que usamos:
+   - Criar interfaces dinâmicas e reativas
+   - Componentes reutilizáveis (DRY - Don't Repeat Yourself)
+   - Ecossistema enorme de bibliotecas
+
+
+4. TAILWIND CSS
+   ---------------------------
+   O que é: Framework CSS utilitário
+
+   Como funciona:
+   - Ao invés de escrever CSS separado, você usa "classes prontas"
+   - Exemplo: className="bg-blue-500 text-white p-4"
+   - Gera apenas o CSS usado (arquivo final pequeno)
+
+   Por que usamos:
+   - Desenvolvimento muito mais rápido
+   - Design consistente (cores, espaçamentos padronizados)
+   - Responsivo fácil (sm:, md:, lg: para diferentes telas)
+
+
+5. PRISMA ORM
+   ---------------------------
+   O que é: Ferramenta para trabalhar com banco de dados
+
+   Como funciona:
+   - Define a estrutura dos dados em prisma/schema.prisma
+   - Gera código TypeScript para acessar o banco
+   - Exemplo: prisma.book.findMany() (busca todos os livros)
+   - Migrations: registra mudanças no banco de dados
+
+   Por que usamos:
+   - Não precisa escrever SQL na mão
+   - Type-safety: TypeScript valida as queries
+   - Migrations automáticas
+
+
+6. POSTGRESQL (via Supabase)
+   ---------------------------
+   O que é: Banco de dados relacional robusto
+
+   Como funciona:
+   - Armazena dados em tabelas (como planilhas)
+   - Tabelas principais: users, books
+   - Relacionamentos: 1 user tem vários books
+
+   Por que usamos:
+   - Confiável e escalável
+   - Suporte a queries complexas
+   - Supabase oferece hosting grátis
+
+
+7. NEXTAUTH.JS
+   ---------------------------
+   O que é: Biblioteca de autenticação para Next.js
+
+   Como funciona:
+   - Gerencia login/logout automaticamente
+   - Cria "sessões" (sabe quem está logado)
+   - Middleware protege rotas privadas
+   - Usa bcryptjs para criptografar senhas
+
+   Por que usamos:
+   - Autenticação segura sem escrever tudo do zero
+   - Sessões persistem (usuário continua logado)
+   - Integração perfeita com Next.js
+
+
+8. REACT HOOK FORM + ZOD
+   ---------------------------
+   O que é: Gerenciamento de formulários + validação
+
+   Como funciona:
+   - React Hook Form: controla inputs sem re-renderizar demais
+   - Zod: define regras de validação
+     Exemplo: z.string().min(3) (texto com mínimo 3 caracteres)
+   - Se dados inválidos, mostra erros antes de enviar
+
+   Por que usamos:
+   - Formulários performáticos
+   - Validação declarativa (fácil de ler e manter)
+   - TypeScript integrado
+
+
+9. SWR (Stale-While-Revalidate)
+   ---------------------------
+   O que é: Biblioteca para buscar dados da API
+
+   Como funciona:
+   - useSWR('/api/books', fetcher) busca dados
+   - Cache: mostra dados antigos enquanto busca novos
+   - Revalidação automática (sempre atualizado)
+   - mutate(): atualiza cache manualmente
+
+   Por que usamos:
+   - UX melhor (dados aparecem instantaneamente)
+   - Menos código (loading/error automáticos)
+   - Cache inteligente
+
+
+10. GOOGLE BOOKS API + OPEN LIBRARY API
+    ---------------------------
+    O que é: APIs públicas com informações de milhões de livros
+
+    Como funciona:
+    - Enviam requisições HTTP para buscar livros
+    - Retornam JSON com título, autor, capa, resumo, etc.
+    - Estratégia de fallback: tenta Google Books PT → Google Books EN → Open Library
+
+    Por que usamos:
+    - Autocomplete ao adicionar livros
+    - Busca por autor
+    - Capas e metadados automáticos
+
+
+================================================================================
+📂 ESTRUTURA DO PROJETO
+================================================================================
+
+paginas-amarelas/
+│
+├── app/                          # Rotas da aplicação (App Router)
+│   ├── page.tsx                 # Página inicial (login/registro)
+│   ├── layout.tsx               # Layout global (HTML, Providers)
+│   ├── globals.css              # Estilos globais + Tailwind
+│   │
+│   ├── api/                     # Backend (API Routes)
+│   │   ├── auth/                # Autenticação (NextAuth)
+│   │   ├── books/               # CRUD de livros
+│   │   ├── feed/                # Feed social
+│   │   ├── google-books/        # Proxy para APIs de livros
+│   │   ├── profile/             # Perfil do usuário
+│   │   └── upload/              # Upload de imagens
+│   │
+│   ├── dashboard/               # Biblioteca do usuário
+│   ├── feed/                    # Feed de atividades
+│   ├── profile/                 # Edição de perfil
+│   ├── autor/[author]/          # Página dinâmica de autor
+│   └── u/[username]/            # Perfil público de usuário
+│
+├── components/                   # Componentes React reutilizáveis
+│   ├── layout/                  # AppHeader, Navigation
+│   ├── auth/                    # SessionGate
+│   ├── feed/                    # FeedItem, FeedList, etc.
+│   ├── books/                   # PublicBookCard, etc.
+│   ├── BookCard.tsx             # Card de livro (dashboard)
+│   ├── Modal.tsx                # Modal base (reutilizável)
+│   ├── CreateBookModal.tsx      # Modal de criação (com autocomplete)
+│   ├── AddExternalBookModal.tsx # Modal para adicionar da API
+│   ├── AddFromFeedModal.tsx     # Modal simplificado (sem API)
+│   ├── ConfirmDialog.tsx        # Diálogo de confirmação estilizado
+│   └── ...
+│
+├── lib/                          # Utilitários e configurações
+│   ├── auth.ts                  # Configuração NextAuth
+│   ├── prisma.ts                # Cliente Prisma (singleton)
+│   ├── validations.ts           # Schemas Zod
+│   ├── text.ts                  # Funções de busca/formatação
+│   └── supabase.ts              # Cliente Supabase (storage)
+│
+├── prisma/
+│   ├── schema.prisma            # Schema do banco de dados
+│   ├── migrations/              # Histórico de mudanças no banco
+│   └── seed.ts                  # Dados iniciais (opcional)
+│
+├── public/
+│   └── uploads/                 # Imagens de capas/perfis
+│
+├── middleware.ts                # Proteção de rotas (autenticação)
+├── next.config.js               # Configuração Next.js
+├── tailwind.config.ts           # Configuração Tailwind
+└── tsconfig.json                # Configuração TypeScript
+
+
+================================================================================
+🔐 COMO FUNCIONA A AUTENTICAÇÃO
+================================================================================
+
+FLUXO DE LOGIN/REGISTRO:
+------------------------
+
+1. Usuário acessa "/" (página inicial)
+   → Vê formulário de login/registro (AuthForm.tsx)
+
+2. REGISTRO:
+   - Usuário preenche: nome, username, senha, confirmar senha
+   - Frontend: valida com Zod (registerSchema)
+   - Envia POST /api/auth/register
+   - Backend:
+     * Valida dados novamente
+     * Bcrypt criptografa a senha
+     * Cria usuário no banco (Prisma)
+   - Redireciona para login
+
+3. LOGIN:
+   - Usuário preenche: username, senha
+   - Frontend: valida com Zod (loginSchema)
+   - NextAuth envia credenciais para lib/auth.ts
+   - Backend:
+     * Busca usuário no banco
+     * Compara senha com bcrypt.compare()
+     * Se correto, cria sessão JWT
+   - NextAuth armazena sessão em cookie
+   - Redireciona para /dashboard
+
+4. PROTEÇÃO DE ROTAS:
+   - middleware.ts intercepta todas as requisições
+   - Verifica se rota precisa autenticação (/dashboard, /feed, /profile)
+   - Se não tem sessão → redireciona para "/"
+   - SessionGate (client-side) também valida e redireciona
+
+5. SESSÃO PERSISTENTE:
+   - Cookie httpOnly (mais seguro, JS não acessa)
+   - JWT com informações do usuário
+   - useSession() hook acessa sessão no frontend
+   - getServerSession() acessa sessão no backend
+
+
+================================================================================
+📖 COMO FUNCIONA O GERENCIAMENTO DE LIVROS
+================================================================================
+
+ADICIONAR LIVRO (com autocomplete):
+-----------------------------------
+
+1. Usuário clica "+ Novo Livro" na dashboard
+   → Abre CreateBookModal.tsx
+
+2. Digita título no campo de busca
+   → Debounce (500ms) para não fazer muitas requisições
+
+3. Frontend busca em /api/google-books?q=titulo&maxResults=5
+   → Backend tenta:
+     1. Google Books API (português)
+     2. Google Books API (qualquer idioma)
+     3. Open Library API
+   → Cache em memória (1h) para não repetir buscas
+
+4. Usuário clica em um resultado:
+   → Preenche automaticamente: título, autor, páginas, resumo, capa
+   → didSelectSuggestion = true (trava autocomplete)
+
+5. Usuário ajusta campos (gênero, status, página atual, etc.)
+
+6. Clica "Criar Livro":
+   → Frontend valida com bookSchema (Zod)
+   → POST /api/books
+   → Backend:
+     * Valida novamente
+     * Cria livro no banco vinculado ao userId
+     * Retorna livro criado
+   → SWR mutate() revalida cache
+   → Modal fecha, livro aparece na dashboard
+
+
+ADICIONAR LIVRO DA API (Feed ou Página de Autor):
+-------------------------------------------------
+
+1. Usuário vê livro no feed ou na página de autor
+
+2. Clica no botão "+" amarelo
+   → Abre AddExternalBookModal ou AddFromFeedModal
+
+3. Campos pré-preenchidos:
+   - Título, autor, capa, resumo (da API)
+   - externalId: "google:BOOK_ID" ou "openlibrary:KEY"
+
+4. Usuário escolhe status, rating (0-5 estrelas), anotações
+
+5. Clica "Adicionar":
+   → POST /api/books com externalId
+   → Backend verifica duplicação:
+     * Se externalId já existe para esse usuário → erro 409
+     * Se não existe → cria livro
+   → Frontend atualiza estado local (botão muda para ✓ verde)
+
+
+EDITAR LIVRO:
+------------
+
+1. Usuário clica "Editar" no card
+   → Abre EditBookModal.tsx pré-preenchido
+
+2. Altera campos desejados
+
+3. Clica "Salvar":
+   → PUT /api/books/[id]
+   → Backend valida e atualiza
+   → SWR revalida cache
+
+
+DELETAR LIVRO:
+-------------
+
+1. Usuário clica "✕" no card
+   → Abre ConfirmDialog.tsx
+
+2. Confirma exclusão
+   → DELETE /api/books/[id]
+   → Backend deleta do banco
+   → SWR revalida cache
+
+
+================================================================================
+🔍 COMO FUNCIONA A BUSCA POR AUTOR
+================================================================================
+
+1. Usuário clica no nome de um autor (BookCard, FeedItem, etc.)
+   → Navega para /autor/[author]
+
+2. Página autor/[author]/page.tsx:
+   - useParams() pega nome do autor da URL
+   - decodeURIComponent() decodifica espaços/acentos
+   - Busca em /api/google-books?q=autor&mode=author&maxResults=20
+
+3. Backend (app/api/google-books/route.ts):
+   - mode=author constrói query especial:
+     * Google Books: inauthor:"Nome do Autor"
+     * Open Library: author:"Nome do Autor"
+   - Retorna até 20 livros daquele autor
+
+4. Frontend exibe grid de livros:
+   - Se logado: mostra botão "+" (adicionar)
+   - Lista verifica libraryBooks (Set com externalId)
+   - Se já tem → mostra "✓" verde
+   - Ao adicionar → Set é atualizado (sem duplicação)
+
+
+================================================================================
+📱 COMO FUNCIONA O FEED SOCIAL
+================================================================================
+
+1. FeedPageClient.tsx busca /api/feed
+   → Backend retorna últimas atualizações de todos os usuários
+
+2. Paginação (cursor-based):
+   - Primeiros 20 itens
+   - Botão "Carregar mais" busca próxima página
+   - /api/feed?cursor=20 retorna itens 21-40
+
+3. Cada FeedItem mostra:
+   - Avatar e @ do usuário
+   - Livro adicionado/atualizado
+   - Timestamp relativo ("há 2 horas")
+   - Botão "+" para adicionar à própria biblioteca
+
+4. Verificação de biblioteca:
+   - useEffect busca /api/books (livros do usuário)
+   - Cria Set com "titulo|autor" para lookup rápido
+   - isBookInLibrary(titulo, autor) → boolean
+   - Se já tem → mostra "✓" verde em vez de "+"
+
+
+================================================================================
+🎨 PALETA DE CORES (Tailwind personalizado)
+================================================================================
+
+Primary (Azul escuro):   #1a1f3a - Fundo principal
+Secondary (Ciano):       #22d3ee - Destaques, links
+Accent (Verde):          #10b981 - Sucesso, completo
+Text Muted:              #94a3b8 - Textos secundários
+Border:                  #334155 - Bordas
+
+Gradientes:
+- Amarelo → Laranja: CTAs (botões principais)
+- Ciano → Verde: Filtros ativos
+- Vermelho: Ações destrutivas (deletar)
+
+
+================================================================================
+🗃️ SCHEMA DO BANCO DE DADOS (Prisma)
+================================================================================
+
+MODEL USER:
+----------
+id          Int       (auto-incremento)
+username    String    (único, obrigatório)
+email       String    (único, opcional)
+password    String    (hash bcrypt, obrigatório)
+name        String    (opcional)
+image       String    (URL da foto, opcional)
+createdAt   DateTime  (automático)
+updatedAt   DateTime  (automático)
+books       Book[]    (relação 1:N)
+
+MODEL BOOK:
+----------
+id          Int       (auto-incremento)
+title       String    (obrigatório)
+author      String    (obrigatório)
+genre       String    (opcional)
+pages       Int       (opcional)
+currentPage Int       (opcional, para "Lendo")
+status      String    (a-ler | lendo | lido)
+summary     Text      (opcional)
+coverUrl    String    (opcional)
+coverSource String    (api | upload | manual)
+externalId  String    (google:ID ou openlibrary:KEY, opcional)
+rating      Int       (0-5, opcional)
+notes       Text      (opcional)
+createdAt   DateTime  (automático)
+updatedAt   DateTime  (automático)
+userId      Int       (FK para User)
+user        User      (relação N:1)
+
+
+================================================================================
+🚀 FLUXOS PRINCIPAIS DA APLICAÇÃO
+================================================================================
+
+1. FLUXO DE PRIMEIRO ACESSO:
+   ----------------------------
+   Acessa "/" → Vê login → Clica "Cadastrar" → Preenche dados →
+   POST /api/auth/register → Redireciona login → Faz login →
+   NextAuth cria sessão → Redireciona /dashboard → Dashboard vazia →
+   Clica "+ Novo Livro" → Busca livro → Adiciona → Aparece na biblioteca
+
+
+2. FLUXO DE DESCOBERTA:
+   ----------------------------
+   /dashboard → Clica "Feed de Atividade" → Vê livros de outros usuários →
+   Clica autor → /autor/[author] → Grid com livros do autor →
+   Clica "+" em um livro → Modal abre → Escolhe status/rating →
+   Adiciona → Livro vai pra biblioteca → Botão muda para ✓
+
+
+3. FLUXO DE PERFIL PÚBLICO:
+   ----------------------------
+   /feed → Clica em @username → /u/[username] → Vê biblioteca pública →
+   Vê estatísticas (total, a ler, lendo, lido) →
+   Clica em livro → Modal de detalhes → Vê resumo/páginas
+
+
+4. FLUXO DE GERENCIAMENTO:
+   ----------------------------
+   /dashboard → Filtra por "Lendo" → Busca título → Clica "Editar" →
+   Atualiza página atual → Salva → Progresso atualiza (%) →
+   Status muda para "Lido" → Livro vai para filtro "Lido"
+
+
+================================================================================
+🔒 SEGURANÇA IMPLEMENTADA
+================================================================================
+
+1. SENHAS:
+   - Nunca armazenadas em texto plano
+   - Bcrypt hash com salt automático
+   - Comparação segura com bcrypt.compare()
+
+2. SESSÕES:
+   - JWT assinado com NEXTAUTH_SECRET
+   - Cookie httpOnly (JS não acessa)
+   - Expira após período inativo
+
+3. VALIDAÇÃO:
+   - Client-side: Zod valida antes de enviar
+   - Server-side: Zod valida novamente (nunca confiar no client)
+   - SQL Injection protegido (Prisma usa prepared statements)
+
+4. AUTORIZAÇÃO:
+   - Middleware bloqueia rotas não autenticadas
+   - APIs verificam session antes de executar
+   - Usuário só acessa/edita seus próprios livros
+
+5. CORS/XSS:
+   - Next.js sanitiza inputs automaticamente
+   - Headers de segurança configurados
+   - Upload de imagens validado
+
+
+================================================================================
+⚡ OTIMIZAÇÕES DE PERFORMANCE
+================================================================================
+
+1. CACHE:
+   - SWR: cache em memória no client
+   - Google Books API: cache 1h no servidor
+   - Imagens: Next.js Image otimiza automaticamente
+
+2. DEBOUNCE:
+   - Busca de livros: 500ms
+   - Busca na dashboard: 400ms
+   - Evita requisições desnecessárias
+
+3. LAZY LOADING:
+   - Imagens carregam sob demanda
+   - Feed com paginação (20 items por vez)
+
+4. CODE SPLITTING:
+   - Next.js divide código automaticamente
+   - Cada página carrega apenas o necessário
+
+5. DATABASE:
+   - Índices em campos buscados (username, userId)
+   - Queries otimizadas (select apenas campos necessários)
+
+
+================================================================================
+📝 MELHORES PRÁTICAS APLICADAS
+================================================================================
+
+1. COMPONENTES REUTILIZÁVEIS:
+   - Modal.tsx usado por vários modais
+   - BookCard.tsx usado em dashboard e perfil
+   - ConfirmDialog.tsx para confirmações
+
+2. DRY (Don't Repeat Yourself):
+   - Funções utilitárias em lib/
+   - Schemas Zod compartilhados
+   - Estilos Tailwind consistentes
+
+3. SEPARATION OF CONCERNS:
+   - Frontend: componentes visuais
+   - Backend: lógica de negócio
+   - Database: persistência
+   - Auth: autenticação isolada
+
+4. TYPE SAFETY:
+   - TypeScript em 100% do código
+   - Prisma gera tipos do banco
+   - Zod valida runtime
+
+5. CÓDIGO LIMPO:
+   - Nomes descritivos
+   - Funções pequenas e focadas
+   - Comentários onde necessário
+
+
+================================================================================
+🐛 TRATAMENTO DE ERROS
+================================================================================
+
+1. FRONTEND:
+   - Try/catch em requisições
+   - Estados de error exibidos ao usuário
+   - Fallbacks para dados ausentes
+
+2. BACKEND:
+   - Validação com Zod (retorna erros específicos)
+   - HTTP status codes apropriados (400, 401, 404, 500)
+   - Logs de erro no console
+
+3. BANCO DE DADOS:
+   - Prisma trata erros de conexão
+   - Unique constraints evitam duplicação
+   - Foreign keys mantêm integridade
+
+
+================================================================================
+📊 ESTADO DA APLICAÇÃO
+================================================================================
+
+ESTADO LOCAL (useState):
+- Modais abertos/fechados
+- Livro selecionado
+- Filtros ativos
+- Query de busca
+
+ESTADO GLOBAL (SWR):
+- Lista de livros
+- Itens do feed
+- Dados de perfil
+- Revalidação automática
+
+ESTADO DO SERVIDOR:
+- Sessão (NextAuth)
+- Banco de dados (Prisma)
+- Cache de APIs
+
+
+================================================================================
+🎯 DECISÕES DE DESIGN
+================================================================================
+
+1. Por que App Router (não Pages Router)?
+   - Mais moderno e performático
+   - Server Components por padrão
+   - Layouts aninhados mais fáceis
+
+2. Por que Tailwind (não CSS puro)?
+   - Desenvolvimento 5x mais rápido
+   - Design system consistente
+   - Purge automático (CSS mínimo)
+
+3. Por que Prisma (não SQL puro)?
+   - Type-safety completo
+   - Migrations gerenciadas
+   - Queries mais legíveis
+
+4. Por que NextAuth (não implementação própria)?
+   - Segurança testada
+   - Session management robusto
+   - Suporte a múltiplos providers
+
+5. Por que SWR (não useEffect + fetch)?
+   - Cache inteligente
+   - Revalidação automática
+   - Menos código boilerplate
+
+
+================================================================================
+🔄 FLUXO DE DADOS COMPLETO (Exemplo: Adicionar Livro)
+================================================================================
+
+1. USER ACTION:
+   Usuário clica "+ Novo Livro"
+
+2. FRONTEND (CreateBookModal.tsx):
+   - useState abre modal
+   - useForm gerencia inputs
+   - Debounce busca sugestões
+
+3. API CALL (busca):
+   - fetch('/api/google-books?q=...')
+   - Cache verifica se já buscou
+   - Se não, faz request para Google Books
+
+4. GOOGLE BOOKS API:
+   - Retorna JSON com livros
+   - Normalização unifica formato
+   - Cache salva por 1h
+
+5. FRONTEND (seleção):
+   - Usuário clica em sugestão
+   - Campos preenchem automaticamente
+   - Autocomplete trava (didSelectSuggestion)
+
+6. FRONTEND (submit):
+   - useForm valida com Zod
+   - Se válido, POST /api/books
+   - Loading state ativa
+
+7. BACKEND (route.ts):
+   - getServerSession verifica autenticação
+   - Zod valida payload
+   - Prisma.book.create() insere no banco
+
+8. DATABASE:
+   - PostgreSQL executa INSERT
+   - Retorna livro criado
+
+9. BACKEND (response):
+   - Retorna JSON com livro
+
+10. FRONTEND (atualização):
+    - SWR mutate() revalida cache
+    - Modal fecha
+    - Livro aparece na dashboard
+    - Loading state desativa
+
+
+================================================================================
+🌐 DEPLOY (Vercel + Supabase)
+================================================================================
+
+FRONTEND (Vercel):
+- Build: next build
+- Serverless functions (API routes)
+- CDN global
+- HTTPS automático
+
+DATABASE (Supabase):
+- PostgreSQL gerenciado
+- Connection pooling
+- Backups automáticos
+
+ASSETS:
+- public/uploads/ (local em dev)
+- Supabase Storage (produção)
+
+
+================================================================================
+💡 CONCEITOS AVANÇADOS SIMPLIFICADOS
+================================================================================
+
+1. SERVER COMPONENTS vs CLIENT COMPONENTS:
+   - Server: renderizam no servidor (mais rápido, SEO melhor)
+   - Client: "use client" (interatividade, useState, useEffect)
+   - Hybrid: usa ambos conforme necessário
+
+2. MIDDLEWARE:
+   - Código que roda ANTES da página carregar
+   - Verifica autenticação
+   - Redireciona se necessário
+
+3. DEBOUNCE:
+   - Aguarda usuário parar de digitar
+   - Só então faz a busca
+   - Economiza requisições
+
+4. OPTIMISTIC UPDATES:
+   - SWR atualiza UI antes da resposta do servidor
+   - Se falhar, reverte
+   - UX mais rápido
+
+5. CURSOR-BASED PAGINATION:
+   - Ao invés de "página 2", usa "cursor=20"
+   - Funciona melhor com dados dinâmicos
+   - Evita itens duplicados
+
+
+================================================================================
+📞 APIs EXTERNAS USADAS
+================================================================================
+
+1. GOOGLE BOOKS API:
+   Endpoint: https://www.googleapis.com/books/v1/volumes
+   Params: q (query), maxResults, langRestrict, printType
+   Rate limit: 1000 req/dia (grátis)
+
+2. OPEN LIBRARY API:
+   Endpoint: https://openlibrary.org/search.json
+   Params: q (query), limit
+   Rate limit: Ilimitado (mas devemos ser gentis)
+
+
+================================================================================
+🎓 TERMOS TÉCNICOS EXPLICADOS
+================================================================================
+
+- API: "Garçom" que traz dados do servidor
+- Component: Peça reutilizável da interface
+- Hook: Função especial do React (useState, useEffect)
+- State: Dados que mudam e fazem a tela atualizar
+- Props: Parâmetros passados para componentes
+- JWT: Token criptografado com info do usuário
+- ORM: Tradutor entre código e banco de dados
+- Schema: "Receita" da estrutura do banco
+- Migration: Mudança registrada no banco
+- Middleware: Código que roda "no meio" da requisição
+- Debounce: Esperar antes de executar
+- Cache: Memória temporária para não buscar de novo
+- Mutation: Mudança de dados (POST, PUT, DELETE)
+- Validation: Verificar se dados estão corretos
+- Sanitization: Limpar dados maliciosos
+
+
+================================================================================
+✅ CHECKLIST DE FUNCIONALIDADES
+================================================================================
+
+[✓] Autenticação (login/registro)
+[✓] Proteção de rotas (middleware + SessionGate)
+[✓] CRUD completo de livros
+[✓] Autocomplete ao adicionar livro
+[✓] Upload de capas
+[✓] Filtros (A ler, Lendo, Lido)
+[✓] Busca por título/autor
+[✓] Progresso de leitura (%)
+[✓] Feed social (últimas atividades)
+[✓] Perfil público
+[✓] Exploração por autor
+[✓] Adicionar livros da API
+[✓] Evitar duplicação
+[✓] Modal de confirmação estilizado
+[✓] Responsividade mobile
+[✓] Dark mode (tema padrão)
+
+
+================================================================================
+📚 RECURSOS PARA APRENDER MAIS
+================================================================================
+
+Next.js: https://nextjs.org/docs
+React: https://react.dev
+TypeScript: https://www.typescriptlang.org/docs
+Tailwind: https://tailwindcss.com/docs
+Prisma: https://www.prisma.io/docs
+NextAuth: https://next-auth.js.org
+
+
+================================================================================
+FIM DA DOCUMENTAÇÃO
+================================================================================
+
+Este projeto demonstra uma aplicação full-stack moderna com:
+- Arquitetura escalável
+- Boas práticas de código
+- UX pensada no usuário
+- Segurança implementada
+- Performance otimizada
+
+Criado com ❤️ para gerenciar sua biblioteca de forma inteligente!

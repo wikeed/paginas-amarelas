@@ -59,10 +59,7 @@ export function AddExternalBookModal({
       setError('');
 
       // Construir externalId baseado na fonte
-      const externalId =
-        book.source === 'google'
-          ? `google:${book.id}`
-          : `openlibrary:${book.id}`;
+      const externalId = book.source === 'google' ? `google:${book.id}` : `openlibrary:${book.id}`;
 
       const response = await fetch('/api/books', {
         method: 'POST',

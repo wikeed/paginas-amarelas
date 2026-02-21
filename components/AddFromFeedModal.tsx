@@ -19,12 +19,7 @@ interface AddFromFeedModalProps {
   };
 }
 
-export function AddFromFeedModal({
-  isOpen,
-  onClose,
-  onSave,
-  initialData,
-}: AddFromFeedModalProps) {
+export function AddFromFeedModal({ isOpen, onClose, onSave, initialData }: AddFromFeedModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 

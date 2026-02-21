@@ -86,9 +86,7 @@ export default function AutorPage() {
 
         const data = await response.json();
         const externalIds = new Set<string>(
-          data
-            .filter((book: any) => book.externalId)
-            .map((book: any) => book.externalId)
+          data.filter((book: any) => book.externalId).map((book: any) => book.externalId)
         );
         setLibraryBooks(externalIds);
       } catch (err) {
@@ -107,14 +105,17 @@ export default function AutorPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold mb-1">
-                Livros de <span className="bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">{authorName}</span>
+                Livros de{' '}
+                <span className="bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+                  {authorName}
+                </span>
               </h1>
               <p className="text-text-muted text-sm">
                 {isLoading
                   ? 'Carregando...'
                   : books.length === 0
-                  ? 'Nenhum livro encontrado'
-                  : `${books.length} livro${books.length !== 1 ? 's' : ''} encontrado${books.length !== 1 ? 's' : ''}`}
+                    ? 'Nenhum livro encontrado'
+                    : `${books.length} livro${books.length !== 1 ? 's' : ''} encontrado${books.length !== 1 ? 's' : ''}`}
               </p>
             </div>
             <Link
@@ -147,7 +148,9 @@ export default function AutorPage() {
         {/* Empty State */}
         {!isLoading && !error && books.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-text-muted mb-4">Nenhum livro encontrado para &quot;{authorName}&quot;</p>
+            <p className="text-text-muted mb-4">
+              Nenhum livro encontrado para &quot;{authorName}&quot;
+            </p>
             <Link
               href="/dashboard"
               className="inline-block px-4 py-2 rounded bg-gradient-to-r from-cyan-500 to-green-500 text-white font-medium hover:brightness-110 transition"

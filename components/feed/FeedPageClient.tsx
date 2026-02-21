@@ -59,9 +59,7 @@ export function FeedPageClient({
 
         const data = await response.json();
         // Create a Set of "title|author" for quick lookup
-        const bookKeys = new Set<string>(
-          data.map((book: any) => `${book.title}|${book.author}`)
-        );
+        const bookKeys = new Set<string>(data.map((book: any) => `${book.title}|${book.author}`));
         setUserLibraryBooks(bookKeys);
       } catch (err) {
         console.error('Error fetching library books:', err);

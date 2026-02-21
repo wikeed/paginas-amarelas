@@ -85,11 +85,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Create book error:', error);
     return NextResponse.json(
-      { 
-        message: 'Erro ao criar livro', 
+      {
+        message: 'Erro ao criar livro',
         error: String(error),
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
