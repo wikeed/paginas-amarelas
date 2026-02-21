@@ -332,9 +332,13 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                   key={s.id}
                   className="flex items-center gap-2 px-2 py-2 hover:bg-white/5 cursor-pointer"
                   onClick={() => {
-                    // prevent the title watch effect from immediately re-fetching
+                    // prevent both title and author watch effects from immediately re-fetching
                     setSuppressSuggestions(true);
                     setDidSelectSuggestion(true);
+                    setSuppressAuthorSuggestions(true);
+                    setDidSelectAuthorSuggestion(true);
+                    
+                    // Clear title debounce and abort
                     if (debounceRef.current) {
                       window.clearTimeout(debounceRef.current);
                     }
@@ -342,7 +346,19 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                       suggestionsAbortRef.current.abort();
                       suggestionsAbortRef.current = null;
                     }
+                    
+                    // Clear author debounce and abort
+                    if (authorDebounceRef.current) {
+                      window.clearTimeout(authorDebounceRef.current);
+                    }
+                    if (authorAbortRef.current) {
+                      authorAbortRef.current.abort();
+                      authorAbortRef.current = null;
+                    }
+                    
                     setSuggestionsLoading(false);
+                    setAuthorSuggestionsLoading(false);
+                    
                     form.setValue('title', s.title);
                     form.setValue('author', s.authors.join(', '));
                     form.setValue(
@@ -355,8 +371,13 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                       form.setValue('coverSource', 'api');
                     }
                     setSuggestions([]);
+                    setAuthorSuggestions([]);
+                    
                     // re-enable after a short delay
-                    window.setTimeout(() => setSuppressSuggestions(false), 350);
+                    window.setTimeout(() => {
+                      setSuppressSuggestions(false);
+                      setSuppressAuthorSuggestions(false);
+                    }, 350);
                   }}
                 >
                   {s.thumbnail ? (
@@ -429,9 +450,13 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                   key={s.id}
                   className="flex items-center gap-2 px-2 py-2 hover:bg-white/5 cursor-pointer"
                   onClick={() => {
-                    // prevent the author watch effect from immediately re-fetching
+                    // prevent both author and title watch effects from immediately re-fetching
                     setSuppressAuthorSuggestions(true);
                     setDidSelectAuthorSuggestion(true);
+                    setSuppressSuggestions(true);
+                    setDidSelectSuggestion(true);
+                    
+                    // Clear author debounce and abort
                     if (authorDebounceRef.current) {
                       window.clearTimeout(authorDebounceRef.current);
                     }
@@ -439,7 +464,19 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                       authorAbortRef.current.abort();
                       authorAbortRef.current = null;
                     }
+                    
+                    // Clear title debounce and abort
+                    if (debounceRef.current) {
+                      window.clearTimeout(debounceRef.current);
+                    }
+                    if (suggestionsAbortRef.current) {
+                      suggestionsAbortRef.current.abort();
+                      suggestionsAbortRef.current = null;
+                    }
+                    
                     setAuthorSuggestionsLoading(false);
+                    setSuggestionsLoading(false);
+                    
                     form.setValue('title', s.title);
                     form.setValue('author', s.authors.join(', '));
                     form.setValue(
@@ -452,8 +489,13 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                       form.setValue('coverSource', 'api');
                     }
                     setAuthorSuggestions([]);
+                    setSuggestions([]);
+                    
                     // re-enable after a short delay
-                    window.setTimeout(() => setSuppressAuthorSuggestions(false), 350);
+                    window.setTimeout(() => {
+                      setSuppressAuthorSuggestions(false);
+                      setSuppressSuggestions(false);
+                    }, 350);
                   }}
                 >
                   {s.thumbnail ? (
