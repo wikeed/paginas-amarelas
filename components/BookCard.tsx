@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { BookCover } from './BookCover';
 
 interface BookCardProps {
@@ -78,7 +79,13 @@ export function BookCard({
         <h3 className="font-semibold text-white truncate" title={title}>
           {title}
         </h3>
-        <p className="text-sm text-text-muted truncate">{author}</p>
+        <Link
+          href={`/autor/${encodeURIComponent(author)}`}
+          className="text-sm text-text-muted hover:text-secondary transition truncate"
+          title={author}
+        >
+          {author}
+        </Link>
 
         {/* Gênero e Páginas - Flex justify-between quando ambos existirem */}
         {(genre || pages) && (

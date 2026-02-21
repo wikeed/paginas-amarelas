@@ -58,6 +58,24 @@ export const bookSchema = z
       .optional()
       .nullable()
       .transform((v) => v ?? undefined),
+    externalId: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((v) => (v === '' ? undefined : v)),
+    rating: z
+      .union([
+        z.number().int().min(1).max(5),
+        z.undefined(),
+        z.null(),
+      ])
+      .optional()
+      .transform((v) => (v === null || v === 0 ? undefined : v)),
+    notes: z
+      .string()
+      .optional()
+      .nullable()
+      .transform((v) => (v === '' ? undefined : v)),
   })
   .refine(
     (data) => {

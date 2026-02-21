@@ -144,13 +144,29 @@ async function fetchOpenLibrary(q: string, maxResults: string) {
   return res.json();
 }
 
+// Build search query strings for different APIs
+function buildGoogleBooksQuery(q: string, mode: 'title' | 'author' = 'title'): string {
+  if (mode === 'author') {
+    return `inauthor:"${q}"`;
+  }
+  return q;
+}
+
+function buildOpenLibraryQuery(q: string, mode: 'title' | 'author' = 'title'): string {
+  if (mode === 'author') {
+    return `author:"${q}"`;
+  }
+  return q;
+}
+
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const q = url.searchParams.get('q') || '';
     const maxResults = url.searchParams.get('maxResults') || '5';
+    const mode = (url.searchParams.get('mode') as 'title' | 'author') || 'title';
 
-    const key = `gb:${q}:m${maxResults}`;
+    const key = `gb:${q}:m${maxResults}:${mode}`;
     const now = Date.now();
     const cached = cache.get(key);
     if (cached && now - cached.ts < CACHE_TTL) {
@@ -164,7 +180,8 @@ export async function GET(request: Request) {
     let openLibraryData: any = null;
 
     try {
-      googlePtData = await fetchGoogleBooks(decodedQ, maxResults, 'pt');
+      const googleQuery = buildGoogleBooksQuery(decodedQ, mode);
+      googlePtData = await fetchGoogleBooks(googleQuery, maxResults, 'pt');
     } catch {
       googlePtData = null;
     }
@@ -174,7 +191,8 @@ export async function GET(request: Request) {
 
     if (items.length === 0) {
       try {
-        googleAnyData = await fetchGoogleBooks(decodedQ, maxResults);
+        const googleQuery = buildGoogleBooksQuery(decodedQ, mode);
+        googleAnyData = await fetchGoogleBooks(googleQuery, maxResults);
       } catch {
         googleAnyData = null;
       }
@@ -185,7 +203,8 @@ export async function GET(request: Request) {
 
     if (items.length === 0) {
       try {
-        openLibraryData = await fetchOpenLibrary(decodedQ, maxResults);
+        const olQuery = buildOpenLibraryQuery(decodedQ, mode);
+        openLibraryData = await fetchOpenLibrary(olQuery, maxResults);
       } catch {
         openLibraryData = null;
       }

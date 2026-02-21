@@ -36,6 +36,9 @@ model Book {
   summary     String?   @db.Text
   coverUrl    String?
   coverSource String?   // "api" | "upload" | "manual"
+  externalId  String?   // ex: "google:BOOK_ID" ou "openlibrary:KEY"
+  rating      Int?      // 0-5 stars
+  notes       String?   @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

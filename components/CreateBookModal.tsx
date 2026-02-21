@@ -24,6 +24,7 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
   const suggestionsAbortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [suppressSuggestions, setSuppressSuggestions] = useState(false);
+  const [didSelectSuggestion, setDidSelectSuggestion] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState('');
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
@@ -56,7 +57,7 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
         setSuggestions([]);
         return;
       }
-      if (suppressSuggestions) return;
+      if (suppressSuggestions || didSelectSuggestion) return;
 
       try {
         console.log('[CreateBookModal] fetching suggestions (Open Library) for', t);
@@ -117,6 +118,7 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
       } catch (err) {
         if ((err as any)?.name === 'AbortError') {
           console.log('[CreateBookModal] fetch aborted');
+          setSuggestionsLoading(false);
           return;
         }
         console.error('[CreateBookModal] fetch error', err);
@@ -124,7 +126,7 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
         setSuggestionsLoading(false);
       }
     },
-    [suppressSuggestions, titleValue]
+    [didSelectSuggestion, suppressSuggestions, titleValue]
   );
 
   useEffect(() => {
@@ -186,7 +188,11 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
           <input
             type="text"
             placeholder="Digite o título"
-            {...form.register('title')}
+            {...form.register('title', {
+              onChange: () => {
+                setDidSelectSuggestion(false);
+              },
+            })}
             className="w-full px-3 py-2 bg-primary border border-border-color rounded text-white text-sm focus:outline-none focus:border-secondary"
           />
           {form.formState.errors.title && (
@@ -202,6 +208,15 @@ export function CreateBookModal({ isOpen, onClose, onSave }: CreateBookModalProp
                   onClick={() => {
                     // prevent the title watch effect from immediately re-fetching
                     setSuppressSuggestions(true);
+                    setDidSelectSuggestion(true);
+                    if (debounceRef.current) {
+                      window.clearTimeout(debounceRef.current);
+                    }
+                    if (suggestionsAbortRef.current) {
+                      suggestionsAbortRef.current.abort();
+                      suggestionsAbortRef.current = null;
+                    }
+                    setSuggestionsLoading(false);
                     form.setValue('title', s.title);
                     form.setValue('author', s.authors.join(', '));
                     form.setValue(

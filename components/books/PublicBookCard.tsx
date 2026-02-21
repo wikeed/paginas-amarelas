@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { BookCover } from '@/components/BookCover';
 
 interface PublicBookCardProps {
@@ -67,7 +68,13 @@ export function PublicBookCard({
         <h3 className="font-semibold text-white truncate" title={title}>
           {title}
         </h3>
-        <p className="text-sm text-text-muted truncate">{author}</p>
+        <Link
+          href={`/autor/${encodeURIComponent(author)}`}
+          className="text-sm text-text-muted hover:text-secondary transition truncate"
+          title={author}
+        >
+          {author}
+        </Link>
 
         {/* Gênero e Páginas */}
         {(genre || pages) && (

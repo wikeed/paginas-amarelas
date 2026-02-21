@@ -104,7 +104,7 @@ export function AppHeader({
           >
             📖 Páginas Amarelas
           </Link>
-          <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2">
+          <div className="w-full sm:w-auto flex items-center justify-end gap-2">
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}

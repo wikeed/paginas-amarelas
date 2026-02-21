@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { FeedList } from './FeedList';
 import { searchBooks } from '@/lib/text';
@@ -35,12 +36,40 @@ export function FeedPageClient({
   initialHasMore,
   initialNextCursor,
 }: FeedPageClientProps) {
+  const { data: session } = useSession();
   const [feedItems, setFeedItems] = useState<FeedItem[]>(initialItems);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [nextCursor, setNextCursor] = useState<number | undefined>(initialNextCursor);
   const [isLoading, setIsLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userLibraryBooks, setUserLibraryBooks] = useState<Set<string>>(new Set());
+
+  // Fetch user's library to check which books are already added
+  useEffect(() => {
+    if (!session?.user) {
+      setUserLibraryBooks(new Set());
+      return;
+    }
+
+    const fetchLibraryBooks = async () => {
+      try {
+        const response = await fetch('/api/books');
+        if (!response.ok) return;
+
+        const data = await response.json();
+        // Create a Set of "title|author" for quick lookup
+        const bookKeys = new Set<string>(
+          data.map((book: any) => `${book.title}|${book.author}`)
+        );
+        setUserLibraryBooks(bookKeys);
+      } catch (err) {
+        console.error('Error fetching library books:', err);
+      }
+    };
+
+    fetchLibraryBooks();
+  }, [session?.user]);
 
   const bookCounts = useMemo(
     () => ({
@@ -89,6 +118,18 @@ export function FeedPageClient({
     }
   };
 
+  // Function to check if a book is already in user's library
+  const isBookInLibrary = (title: string, author: string) => {
+    return userLibraryBooks.has(`${title}|${author}`);
+  };
+
+  // Callback when a book is added to update local state
+  const handleBookAdded = (title: string, author: string) => {
+    const newSet = new Set(userLibraryBooks);
+    newSet.add(`${title}|${author}`);
+    setUserLibraryBooks(newSet);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-primary to-secondary/10">
       <AppHeader
@@ -112,6 +153,8 @@ export function FeedPageClient({
             hasMore={hasMore}
             isLoading={isLoading}
             onLoadMore={handleLoadMore}
+            isBookInLibrary={isBookInLibrary}
+            onBookAdded={handleBookAdded}
           />
         )}
       </main>

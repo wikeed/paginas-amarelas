@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Modal } from './Modal';
 
 interface Book {
@@ -39,7 +40,12 @@ export function BookDetailsModal({ isOpen, onClose, book }: BookDetailsModalProp
 
         <div>
           <h3 className="text-xs font-semibold text-text-muted uppercase mb-1">Autor</h3>
-          <p className="text-white">{book.author}</p>
+          <Link
+            href={`/autor/${encodeURIComponent(book.author)}`}
+            className="text-secondary hover:text-cyan-300 transition font-medium"
+          >
+            {book.author}
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -26,9 +26,18 @@ interface FeedListProps {
   hasMore: boolean;
   isLoading: boolean;
   onLoadMore: () => void;
+  isBookInLibrary?: (title: string, author: string) => boolean;
+  onBookAdded?: (title: string, author: string) => void;
 }
 
-export function FeedList({ items, hasMore, isLoading, onLoadMore }: FeedListProps) {
+export function FeedList({
+  items,
+  hasMore,
+  isLoading,
+  onLoadMore,
+  isBookInLibrary,
+  onBookAdded,
+}: FeedListProps) {
   const [selectedBook, setSelectedBook] = useState<FeedListProps['items'][number] | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -52,7 +61,13 @@ export function FeedList({ items, hasMore, isLoading, onLoadMore }: FeedListProp
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <FeedItem key={item.id} book={item} onExpand={handleExpand} />
+        <FeedItem
+          key={item.id}
+          book={item}
+          onExpand={handleExpand}
+          isInLibrary={isBookInLibrary?.(item.title, item.author) ?? false}
+          onBookAdded={() => onBookAdded?.(item.title, item.author)}
+        />
       ))}
 
       {hasMore && (

@@ -1,8 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { BookCover } from '../BookCover';
 import { Avatar } from '../Avatar';
+import { AddFromFeedModal } from '../AddFromFeedModal';
+import { type BookInput } from '@/lib/validations';
 import { formatTimeAgo } from '@/lib/text';
 
 interface FeedItemProps {
@@ -25,6 +29,8 @@ interface FeedItemProps {
     };
   };
   onExpand: (bookId: number) => void;
+  isInLibrary?: boolean;
+  onBookAdded?: () => void;
 }
 
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
@@ -33,13 +39,36 @@ const statusColors: Record<string, { bg: string; text: string; label: string }> 
   lido: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Lido' },
 };
 
-export function FeedItem({ book, onExpand }: FeedItemProps) {
+export function FeedItem({ book, onExpand, isInLibrary = false, onBookAdded }: FeedItemProps) {
+  const { data: session } = useSession();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const statusInfo = statusColors[book.status] || statusColors['a-ler'];
   const isNew = new Date().getTime() - new Date(book.createdAt).getTime() < 86400000; // 24h
   const progressPercent =
     book.status === 'lendo' && book.pages && book.pages > 0 && book.currentPage != null
       ? Math.min(Math.max((book.currentPage / book.pages) * 100, 0), 100)
       : 0;
+
+  const handleAddBook = async (data: BookInput) => {
+    try {
+      const response = await fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao adicionar livro');
+      }
+
+      // Notify parent that book was added
+      onBookAdded?.();
+    } catch (error) {
+      console.error('Error adding book:', error);
+      throw error;
+    }
+  };
 
   return (
     <div className="relative border border-border-color rounded-lg overflow-hidden bg-card hover:shadow-lg transition-shadow duration-300">
@@ -48,6 +77,31 @@ export function FeedItem({ book, onExpand }: FeedItemProps) {
           NOVO
         </div>
       )}
+
+      {/* Botão + para adicionar à biblioteca (só aparece se logado E não estiver já na biblioteca) */}
+      {session?.user && !isInLibrary && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsAddModalOpen(true);
+          }}
+          className="absolute top-3 left-3 backdrop-blur-sm bg-yellow-500/80 hover:bg-yellow-500 text-white px-2 py-1.5 rounded border border-yellow-600/50 shadow-lg transition duration-200 text-lg leading-none font-bold z-10"
+          title="Adicionar à sua biblioteca"
+        >
+          +
+        </button>
+      )}
+
+      {/* Checkmark para livros já na biblioteca */}
+      {session?.user && isInLibrary && (
+        <div className="absolute top-3 left-3 backdrop-blur-sm bg-green-500/80 px-2 py-1.5 rounded border border-green-600/50 shadow-lg z-10">
+          <span className="text-lg text-white font-bold" title="Já está na sua biblioteca">
+            ✓
+          </span>
+        </div>
+      )}
+
       <div className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6">
         {/* Capa do livro */}
         <div className="w-full sm:w-32 flex-shrink-0">
@@ -82,9 +136,13 @@ export function FeedItem({ book, onExpand }: FeedItemProps) {
               <h3 className="font-semibold text-white text-lg line-clamp-2" title={book.title}>
                 {book.title}
               </h3>
-              <p className="text-text-muted text-sm truncate" title={book.author}>
+              <Link
+                href={`/autor/${encodeURIComponent(book.author)}`}
+                className="text-text-muted hover:text-secondary transition text-sm truncate block"
+                title={book.author}
+              >
                 por {book.author}
-              </p>
+              </Link>
 
               {/* Status Badge */}
               <div className="inline-block">
@@ -128,6 +186,20 @@ export function FeedItem({ book, onExpand }: FeedItemProps) {
           </div>
         </div>
       </div>
+
+      {/* Modal para adicionar à biblioteca */}
+      <AddFromFeedModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={handleAddBook}
+        initialData={{
+          title: book.title,
+          author: book.author,
+          coverUrl: book.coverUrl,
+          summary: book.summary,
+          pages: book.pages,
+        }}
+      />
     </div>
   );
 }

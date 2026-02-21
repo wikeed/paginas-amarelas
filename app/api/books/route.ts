@@ -56,6 +56,23 @@ export async function POST(request: NextRequest) {
     const userId = parseInt((session.user as any).id);
     console.log('Creating book for user:', userId, 'Data:', result.data);
 
+    // Check for duplicate externalId if provided
+    if (result.data.externalId) {
+      const existing = await prisma.book.findFirst({
+        where: {
+          externalId: result.data.externalId,
+          userId,
+        },
+      });
+
+      if (existing) {
+        return NextResponse.json(
+          { message: 'Este livro já está na sua biblioteca' },
+          { status: 409 }
+        );
+      }
+    }
+
     const book = await prisma.book.create({
       data: {
         ...result.data,

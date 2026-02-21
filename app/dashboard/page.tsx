@@ -10,6 +10,7 @@ import { BookCard } from '@/components/BookCard';
 import { BookDetailsModal } from '@/components/BookDetailsModal';
 import { EditBookModal } from '@/components/EditBookModal';
 import { CreateBookModal } from '@/components/CreateBookModal';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { BookInput } from '@/lib/validations';
 
 interface Book extends BookInput {
@@ -33,6 +34,8 @@ export default function DashboardPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState<number | null>(null);
 
   // Fetch books - sempre buscar todos
   const {
@@ -135,11 +138,16 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja deletar este livro?')) return;
+  const handleDelete = (id: number) => {
+    setBookToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!bookToDelete) return;
 
     try {
-      const response = await fetch(`/api/books/${id}`, {
+      const response = await fetch(`/api/books/${bookToDelete}`, {
         method: 'DELETE',
       });
 
@@ -148,6 +156,8 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error deleting book:', error);
+    } finally {
+      setBookToDelete(null);
     }
   };
 
@@ -217,6 +227,17 @@ export default function DashboardPage() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onSave={handleCreateBook}
+      />
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Excluir Livro"
+        message="Tem certeza que deseja excluir este livro? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        isDangerous
       />
     </div>
   );
